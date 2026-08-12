@@ -1,0 +1,1687 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>小乐教师工作台</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <link rel="manifest" href="./manifest.json" />
+  <meta name="theme-color" content="#2563eb" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <style>
+    /* ===== 基础变量 & 重置 ===== */
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    :root {
+      --color-bg: #f7f5f0;
+      --color-card: #ffffff;
+      --color-text: #2c2620;
+      --color-text-secondary: #706b64;
+      --color-accent: #e67e22;
+      --color-accent-light: #f9e2cd;
+      --color-border: #e2ded6;
+      --glass-bg: rgba(255,255,255,0.72);
+      --glass-blur: 12px;
+      --radius: 24px;
+      --shadow: 0 8px 32px rgba(44,38,32,0.08);
+      --nav-height: 64px;
+      --header-height: 56px;
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --anim-enable: 1;
+    }
+    [data-theme="sunny"] {
+      --color-bg: #fffaf0;
+      --color-card: #fff3e0;
+      --color-text: #3c2a21;
+      --color-text-secondary: #785c48;
+      --color-accent: #e67e22;
+      --color-border: #f0d8bc;
+      --glass-bg: rgba(255,248,235,0.74);
+    }
+    [data-theme="deepsea"] {
+      --color-bg: #0f172a;
+      --color-card: #1e293b;
+      --color-text: #e2e8f0;
+      --color-text-secondary: #94a3b8;
+      --color-accent: #38bdf8;
+      --color-border: #334155;
+      --glass-bg: rgba(30,41,59,0.70);
+    }
+    [data-theme="forest"] {
+      --color-bg: #f0f7f0;
+      --color-card: #e4f1e4;
+      --color-text: #1a3620;
+      --color-text-secondary: #476b4e;
+      --color-accent: #229954;
+      --color-border: #b8d8bc;
+      --glass-bg: rgba(234,245,234,0.72);
+    }
+    [data-theme="twilight"] {
+      --color-bg: #1c1b2e;
+      --color-card: #2b2944;
+      --color-text: #e9e7f5;
+      --color-text-secondary: #b4b0d1;
+      --color-accent: #a78bfa;
+      --color-border: #444166;
+      --glass-bg: rgba(43,41,68,0.70);
+    }
+    [data-theme="minimal"] {
+      --color-bg: #f5f5f5;
+      --color-card: #ffffff;
+      --color-text: #111111;
+      --color-text-secondary: #666666;
+      --color-accent: #444444;
+      --color-border: #dddddd;
+      --glass-bg: rgba(255,255,255,0.75);
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme]) {
+        --color-bg: #23211e;
+        --color-card: #302d29;
+        --color-text: #ece9e3;
+        --color-text-secondary: #a8a29b;
+        --color-accent: #f39c12;
+        --color-border: #44403b;
+        --glass-bg: rgba(48,45,41,0.78);
+      }
+    }
+    [data-anim-off="true"] { --anim-enable: 0; }
+    * { transition: calc(var(--anim-enable) * 0.22s) ease; }
+    html, body { height: 100%; }
+    body {
+      background: var(--color-bg);
+      color: var(--color-text);
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      padding-bottom: calc(var(--nav-height) + 20px + var(--safe-bottom));
+      transition: background 0.3s, color 0.3s;
+      overflow-x: hidden;
+    }
+    .card, .bottom-nav {
+      background: var(--glass-bg);
+      backdrop-filter: blur(var(--glass-blur));
+      -webkit-backdrop-filter: blur(var(--glass-blur));
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    @supports not (backdrop-filter: blur(1px)) {
+      .card, .bottom-nav { background: var(--color-card); }
+    }
+    .card { padding: 18px; margin-bottom: 16px; }
+    button, input, textarea, select {
+      font-size: 1rem;
+      font-family: inherit;
+      color: var(--color-text);
+      background: var(--color-card);
+      border: 1px solid var(--color-border);
+      border-radius: 14px;
+      padding: 10px 14px;
+      min-height: 44px;
+      transition: border 0.15s, box-shadow 0.15s, background 0.2s;
+    }
+    button {
+      background: var(--color-accent-light);
+      color: var(--color-accent);
+      border: none;
+      cursor: pointer;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-width: 44px;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.12s, background 0.15s;
+    }
+    button:active { transform: scale(0.94); }
+    button::after {
+      content: "";
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.4);
+      transform: scale(0);
+      animation: none;
+      pointer-events: none;
+    }
+    button:active::after {
+      animation: calc(var(--anim-enable) * 0.45s) ripple;
+    }
+    @keyframes ripple {
+      0% { transform: scale(0); opacity: 0.4; }
+      100% { transform: scale(2.2); opacity: 0; }
+    }
+    input:focus, textarea:focus, select:focus {
+      border-color: var(--color-accent);
+      box-shadow: 0 0 0 3px rgba(230,126,34,0.2);
+      outline: none;
+    }
+    .container { max-width: 960px; margin: 0 auto; padding: 12px 16px; }
+    .header-bar {
+      display: flex; justify-content: space-between; align-items: center;
+      height: var(--header-height); margin-bottom: 16px;
+    }
+    .header-bar h1 {
+      font-size: 1.5rem; font-weight: 700;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .header-actions { display: flex; gap: 6px; align-items: center; }
+    .bottom-nav {
+      position: fixed; left: 0; right: 0; bottom: 0;
+      display: flex; z-index: 100;
+      height: var(--nav-height);
+      padding-bottom: var(--safe-bottom);
+      border-radius: 0;
+      border-left: none;
+      border-right: none;
+      border-bottom: none;
+    }
+    .nav-tab {
+      flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 4px 2px; min-height: 44px; font-size: 0.7rem;
+      color: var(--color-text-secondary); cursor: pointer; background: transparent; border: none;
+      gap: 2px; transition: color 0.2s;
+    }
+    .nav-tab.active { color: var(--color-accent); font-weight: 600; }
+    .nav-tab i { font-size: 1.3rem; margin-bottom: 2px; }
+    .page { display: none; animation: fadeUp 0.35s ease; }
+    .page.active { display: block; }
+    @keyframes fadeUp {
+      from { opacity: 0.3; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .search-overlay {
+      position: fixed; inset: 0; background: var(--color-bg); z-index: 200;
+      padding: 16px; display: none; flex-direction: column;
+    }
+    .search-overlay.open { display: flex; }
+    .search-input-wrap { display: flex; gap: 10px; margin-bottom: 16px; }
+    .search-input-wrap input { flex: 1; border-radius: 30px; padding: 12px 18px; background: var(--color-card); }
+    .search-results { flex: 1; overflow-y: auto; }
+    .search-item {
+      padding: 12px 14px; border-bottom: 1px solid var(--color-border); cursor: pointer;
+      min-height: 44px; display: flex; flex-direction: column; justify-content: center;
+      border-radius: 14px; transition: background 0.1s;
+    }
+    .search-item:active { background: var(--color-accent-light); }
+    .search-item .title { font-weight: 500; font-size: 0.8rem; color: var(--color-text-secondary); }
+    .search-item .text { font-size: 1rem; }
+    .highlight { background: #ffd54f; color: #000; padding: 0 2px; border-radius: 2px; }
+    /* 统计卡片 + 环形 */
+    .stats-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+    .stat-card { text-align: center; padding: 16px 12px; }
+    .stat-ring {
+      position: relative;
+      display: inline-block;
+      width: 100px;
+      height: 100px;
+    }
+    .stat-ring svg {
+      width: 100px;
+      height: 100px;
+      transform: rotate(-90deg);
+    }
+    .ring-bg {
+      fill: none;
+      stroke: var(--color-border);
+      stroke-width: 8;
+    }
+    .ring-fg {
+      fill: none;
+      stroke: var(--color-accent);
+      stroke-width: 8;
+      stroke-linecap: round;
+      stroke-dasharray: 314.16;
+      stroke-dashoffset: 314.16;
+      transition: stroke-dashoffset 0.8s ease;
+    }
+    .stat-card .stat-val {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--color-accent);
+      margin: 0;
+    }
+    .stat-label { font-size: 0.85rem; color: var(--color-text-secondary); }
+    /* 时间线 */
+    .timeline-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--color-border);
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+    .timeline-item:last-child { border-bottom: none; }
+    .timeline-item:active { background: var(--color-accent-light); }
+    .timeline-item .badge {
+      font-size: 0.7rem;
+      padding: 2px 10px;
+      border-radius: 30px;
+      background: var(--color-accent-light);
+      color: var(--color-accent);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .timeline-item .content { flex: 1; word-break: break-word; }
+    .timeline-item .time {
+      font-size: 0.7rem;
+      color: var(--color-text-secondary);
+      white-space: nowrap;
+    }
+    /* 杂碎 */
+    .todo-item {
+      position: relative; overflow: hidden; border-bottom: 1px solid var(--color-border);
+      touch-action: pan-y;
+    }
+    .todo-item:last-child { border-bottom: none; }
+    .todo-item-inner {
+      display: flex; align-items: center; gap: 10px; padding: 12px 10px;
+      background: transparent; transition: transform 0.22s ease, opacity 0.3s;
+      will-change: transform;
+    }
+    .todo-item.done .todo-text { text-decoration: line-through; opacity: 0.5; transform: scale(0.97); transition: all 0.3s ease-out; }
+    .todo-text { flex: 1; word-break: break-word; transition: all 0.3s ease-out; }
+    .todo-pin { cursor: pointer; color: var(--color-text-secondary); transition: color 0.2s, transform 0.2s; }
+    .todo-pin.pinned { color: var(--color-accent); transform: rotate(45deg); }
+    .todo-time { font-size: 0.7rem; color: var(--color-text-secondary); white-space: nowrap; }
+    .btn-del { color: #e74c3c; background: transparent; border: none; font-size: 1.1rem; min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center; }
+    .todo-delete-slide {
+      position: absolute; right: 0; top: 0; bottom: 0; width: 86px;
+      background: #dc3545; color: #fff; display: flex; align-items: center; justify-content: center;
+      font-weight: 500; border-radius: 0 var(--radius) var(--radius) 0;
+      user-select: none; pointer-events: none; transition: opacity 0.2s;
+    }
+    .todo-item.swiped .todo-delete-slide { pointer-events: auto; }
+    /* 教学 */
+    .record-group { margin: 14px 0; }
+    .record-group-title { font-weight: 600; color: var(--color-text-secondary); margin: 8px 0 6px; font-size: 0.95rem; }
+    .record-card {
+      padding: 14px; border: 1px solid var(--color-border); border-radius: var(--radius);
+      margin-bottom: 10px; cursor: pointer; transition: background 0.15s;
+      background: var(--color-card);
+    }
+    .record-card .meta { font-size: 0.8rem; color: var(--color-text-secondary); margin-bottom: 4px; }
+    .record-edit { margin-top: 10px; display: none; }
+    .record-edit.open { display: block; }
+    .record-edit .form-row { margin-bottom: 8px; }
+    /* 周计划 */
+    .week-selector { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 14px; }
+    .week-selector input[type="week"] { flex: 1; min-width: 140px; }
+    .plan-section-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .plan-section {
+      background: var(--color-card); border-radius: var(--radius);
+      padding: 14px; box-shadow: var(--shadow);
+    }
+    .plan-section h3 { display: flex; justify-content: space-between; font-size: 0.95rem; margin-bottom: 8px; }
+    .task-item {
+      display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--color-border);
+    }
+    .task-item:last-child { border-bottom: none; }
+    .task-item .task-text { flex: 1; transition: all 0.3s ease-out; }
+    .task-item.done .task-text { text-decoration: line-through; opacity: 0.5; transform: scale(0.97); }
+    /* 黑本 */
+    .bb-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--color-border); }
+    .bb-item:last-child { border-bottom: none; }
+    .bb-item .bb-text { flex: 1; }
+    .bb-item.done .bb-text { text-decoration: line-through; opacity: 0.6; }
+    .bb-note-btn { background: transparent; border: none; color: var(--color-accent); font-size: 0.9rem; min-width: 44px; min-height: 44px; }
+    /* 空状态 */
+    .empty-tip { text-align: center; padding: 36px 16px; color: var(--color-text-secondary); }
+    .empty-tip .illustration {
+      display: inline-block; width: 80px; height: 80px;
+      background: var(--color-accent-light); border-radius: 50%;
+      line-height: 80px; font-size: 2.8rem; margin-bottom: 12px;
+    }
+    .empty-tip .desc { font-size: 1rem; }
+    /* Modal */
+    .modal-mask {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 150;
+      display: none; align-items: center; justify-content: center; padding: 16px;
+      backdrop-filter: blur(3px);
+    }
+    .modal-mask.open { display: flex; }
+    .modal {
+      background: var(--glass-bg);
+      backdrop-filter: blur(var(--glass-blur));
+      -webkit-backdrop-filter: blur(var(--glass-blur));
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius); width: 100%; max-width: 520px;
+      padding: 20px 24px; max-height: 85vh; overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    @supports not (backdrop-filter: blur(1px)) {
+      .modal { background: var(--color-card); }
+    }
+    .modal .btn-group { display: flex; gap: 10px; flex-wrap: wrap; margin: 12px 0; }
+    .modal-buttons { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
+    /* Toast */
+    .toast {
+      position: fixed; left: 50%; transform: translateX(-50%); bottom: 90px;
+      background: var(--color-text); color: var(--color-bg); padding: 10px 20px;
+      border-radius: 30px; z-index: 300; opacity: 0; transition: opacity 0.25s;
+      pointer-events: none; font-size: 0.9rem; max-width: 90%; text-align: center;
+    }
+    .toast.show { opacity: 0.92; }
+    /* Splash */
+    .splash-screen {
+      position: fixed; inset: 0; z-index: 9999;
+      background: var(--color-bg);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 24px;
+    }
+    .splash-logo {
+      font-size: 32px; font-weight: bold; color: var(--color-accent);
+    }
+    .splash-progress-wrap {
+      width: 220px; height: 6px; border-radius: 99px;
+      background: var(--color-border);
+      overflow: hidden;
+    }
+    .splash-progress-bar {
+      height: 100%; width: 0%; background: var(--color-accent);
+      border-radius: 99px;
+    }
+    .splash-screen.fadeout {
+      opacity: 0; pointer-events: none;
+      transition: calc(var(--anim-enable) * 0.4s) opacity;
+    }
+    /* 其他工具 */
+    .flex-between { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+    .btn-group { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+    .form-row { margin-bottom: 12px; }
+    .form-row label { display: block; font-size: 0.85rem; color: var(--color-text-secondary); margin-bottom: 3px; }
+    .toggle-row { display: flex; align-items: center; gap: 10px; margin: 10px 0; }
+    .toggle {
+      width: 44px; height: 24px; border-radius: 999px; background: var(--color-border);
+      position: relative; cursor: pointer; flex-shrink: 0; transition: background 0.2s;
+    }
+    .toggle::after {
+      content: ""; position: absolute; top: 2px; left: 2px; width: 20px; height: 20px;
+      background: #fff; border-radius: 50%; transition: transform 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+    .toggle.on { background: var(--color-accent); }
+    .toggle.on::after { transform: translateX(20px); }
+    .auto-wrap { position: relative; }
+    .auto-dropdown {
+      position: absolute; left: 0; right: 0; top: calc(100% + 4px);
+      background: var(--color-card); border: 1px solid var(--color-border);
+      border-radius: 14px; z-index: 10; max-height: 180px; overflow-y: auto;
+      display: none;
+    }
+    .auto-item { padding: 10px 14px; cursor: pointer; min-height: 44px; }
+    .auto-item:active { background: var(--color-accent-light); }
+    .search-flash { animation: flashBg 1s ease-out; }
+    @keyframes flashBg { 0% { background-color: rgba(255,160,60,0.4); } 100% { background-color: transparent; } }
+    .stagger-item {
+      opacity: 0; transform: translateY(12px);
+      animation: staggerIn 0.3s ease forwards;
+    }
+    @keyframes staggerIn { to { opacity: 1; transform: translateY(0); } }
+    @media (max-width: 480px) {
+      .stats-row { grid-template-columns: 1fr; }
+      .plan-section-wrap { grid-template-columns: 1fr !important; }
+      .search-item { min-height: 44px; padding: 12px 10px; }
+      .container { padding: 8px 10px; }
+      .card { padding: 14px; }
+    }
+    body.no-anim * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  </style>
+</head>
+<body>
+  <!-- Splash 开屏 -->
+  <div id="splashScreen" class="splash-screen">
+    <div class="splash-logo">📋 小乐教师工作台</div>
+    <div class="splash-progress-wrap">
+      <div id="splashProgressBar" class="splash-progress-bar"></div>
+    </div>
+  </div>
+
+  <!-- 顶部导航 -->
+  <div class="container">
+    <div class="header-bar">
+      <h1><i class="fas fa-chalkboard-teacher" style="color:var(--color-accent);"></i> 小乐工作台</h1>
+      <div class="header-actions">
+        <button id="themeToggleBtn" title="切换主题"><i class="fas fa-palette"></i></button>
+        <button id="openSearchBtn" title="搜索"><i class="fas fa-search"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 搜索覆盖层 -->
+  <div class="search-overlay" id="searchOverlay">
+    <div class="search-input-wrap">
+      <input type="text" id="searchInput" placeholder="搜索全部内容…" autofocus />
+      <button id="closeSearchBtn"><i class="fas fa-times"></i> 关闭</button>
+    </div>
+    <div class="search-results" id="searchResults"></div>
+  </div>
+
+  <!-- 主内容 -->
+  <div class="container" id="mainContent">
+    <!-- 总览（新设计） -->
+    <div id="page-overview" class="page active">
+      <div class="stats-row">
+        <div class="card stat-card">
+          <div class="stat-ring">
+            <svg viewBox="0 0 120 120">
+              <circle class="ring-bg" cx="60" cy="60" r="50"/>
+              <circle class="ring-fg" cx="60" cy="60" r="50" id="ringTodo"/>
+            </svg>
+            <div class="stat-val" id="stat-todo-rate">0%</div>
+          </div>
+          <div class="stat-label"><i class="fas fa-check-circle"></i> 杂碎完成率</div>
+        </div>
+        <div class="card stat-card">
+          <div class="stat-val" id="stat-teach-count">0</div>
+          <div class="stat-label"><i class="fas fa-book"></i> 教学记录总数</div>
+        </div>
+        <div class="card stat-card">
+          <div class="stat-val" id="stat-week-progress">0/0</div>
+          <div class="stat-label"><i class="fas fa-calendar-alt"></i> 周计划完成进度</div>
+        </div>
+        <div class="card stat-card">
+          <div class="stat-val" id="stat-black-weeks">0</div>
+          <div class="stat-label"><i class="fas fa-notebook"></i> 黑本累计周数</div>
+        </div>
+      </div>
+
+      <!-- 最近动态时间线 -->
+      <div class="card">
+        <h3 style="margin-bottom:12px;"><i class="fas fa-clock"></i> 最近动态</h3>
+        <div id="overviewTimeline"></div>
+      </div>
+
+      <!-- 快捷操作 -->
+      <div class="card">
+        <h3 style="margin-bottom:10px;"><i class="fas fa-bolt"></i> 快捷操作</h3>
+        <div class="btn-group" style="gap:10px;">
+          <button onclick="switchPage('todo'); document.getElementById('todoInput').focus();"><i class="fas fa-plus-circle"></i> 添加杂碎</button>
+          <button onclick="switchPage('teach');"><i class="fas fa-pen-fancy"></i> 新建教学</button>
+          <button onclick="switchPage('weekplan');"><i class="fas fa-calendar-week"></i> 本周计划</button>
+          <button onclick="switchPage('blackbook');"><i class="fas fa-notebook"></i> 决策黑本</button>
+          <button onclick="manualBackup();"><i class="fas fa-download"></i> 手动备份</button>
+        </div>
+      </div>
+
+      <!-- 导入导出 -->
+      <div class="card">
+        <h2 style="margin-bottom:10px;"><i class="fas fa-file-import"></i> 数据导入 / 导出</h2>
+        <div class="btn-group">
+          <button id="btnExport"><i class="fas fa-file-export"></i> 导出 JSON</button>
+          <button id="btnImport"><i class="fas fa-file-import"></i> 导入 JSON</button>
+        </div>
+        <input type="file" id="importFileInput" accept=".json" style="display:none;" />
+      </div>
+    </div>
+
+    <!-- 杂碎 -->
+    <div id="page-todo" class="page">
+      <div class="card">
+        <div class="form-row" style="display:flex; gap:8px;">
+          <input id="todoInput" placeholder="新增杂碎，回车添加" style="flex:1;" />
+          <button id="todoAddBtn"><i class="fas fa-plus"></i> 添加</button>
+        </div>
+        <div class="toggle-row">
+          <div id="toggleHideDone" class="toggle"></div>
+          <span>隐藏已完成</span>
+        </div>
+        <div class="btn-group">
+          <button id="btnClearDone"><i class="fas fa-eraser"></i> 清空已完成</button>
+        </div>
+        <div id="todoListWrap"></div>
+      </div>
+    </div>
+
+    <!-- 教学 -->
+    <div id="page-teach" class="page">
+      <div class="card">
+        <h2><i class="fas fa-pen-fancy"></i> 新建教学记录</h2>
+        <div class="btn-group">
+          <button class="quick-btn" data-text="讲授新课"><i class="fas fa-chalkboard"></i> 讲授新课</button>
+          <button class="quick-btn" data-text="复习巩固"><i class="fas fa-redo-alt"></i> 复习巩固</button>
+          <button class="quick-btn" data-text="测验考试"><i class="fas fa-file-alt"></i> 测验考试</button>
+          <button class="quick-btn" data-text="习题讲评"><i class="fas fa-comment-dots"></i> 习题讲评</button>
+        </div>
+        <div class="form-row"><label><i class="far fa-calendar-alt"></i> 日期</label><input type="date" id="teachDate" /></div>
+        <div class="form-row auto-wrap">
+          <label><i class="fas fa-users"></i> 班级</label>
+          <input id="teachClass" placeholder="输入班级" />
+          <div class="auto-dropdown" id="ddClass"></div>
+        </div>
+        <div class="form-row auto-wrap">
+          <label><i class="fas fa-book-open"></i> 科目</label>
+          <input id="teachSubject" placeholder="输入科目" />
+          <div class="auto-dropdown" id="ddSubject"></div>
+        </div>
+        <div class="form-row"><label><i class="fas fa-align-left"></i> 教学内容</label><textarea id="teachContent" rows="3" placeholder="教学内容"></textarea></div>
+        <div class="form-row"><label><i class="fas fa-home"></i> 作业布置</label><textarea id="teachHomework" rows="2" placeholder="作业布置"></textarea></div>
+        <div class="form-row"><label><i class="fas fa-user-slash"></i> 缺勤名单（逗号分隔）</label><input id="teachAbsent" placeholder="张三,李四" /></div>
+        <div class="btn-group">
+          <button id="btnCopyLast"><i class="fas fa-copy"></i> 复制上节课</button>
+          <button id="btnSaveTeach" style="background:var(--color-accent);color:#fff;"><i class="fas fa-save"></i> 保存记录</button>
+        </div>
+      </div>
+      <div class="card">
+        <h2><i class="fas fa-history"></i> 历史记录</h2>
+        <div id="teachRecordWrap"></div>
+      </div>
+    </div>
+
+    <!-- 周计划 -->
+    <div id="page-weekplan" class="page">
+      <div class="card">
+        <div class="week-selector">
+          <label><i class="fas fa-calendar-week"></i> 选择周：</label>
+          <input type="week" id="weekPicker" />
+        </div>
+        <div class="btn-group">
+          <button id="btnRollNext"><i class="fas fa-forward"></i> 未完成滚到下周</button>
+          <button id="btnSaveTemplate"><i class="fas fa-save"></i> 存为模板</button>
+          <select id="templateSelect" style="flex:1; min-width:120px; border-radius:30px; padding:0 12px; background:var(--color-card); color:var(--color-text); border:1px solid var(--color-border); min-height:44px;">
+            <option value="">-- 选择模板 --</option>
+          </select>
+          <button id="btnLoadTemplate"><i class="fas fa-upload"></i> 载入</button>
+        </div>
+        <div class="plan-section-wrap" id="planWrap"></div>
+      </div>
+    </div>
+
+    <!-- 黑本 -->
+    <div id="page-blackbook" class="page">
+      <div class="card">
+        <div class="week-selector">
+          <label><i class="fas fa-calendar-week"></i> 选择周：</label>
+          <input type="week" id="bbWeekPicker" />
+        </div>
+        <div class="form-row"><textarea id="bbInput" rows="2" placeholder="录入本周指令（每周最多3条）"></textarea></div>
+        <div class="btn-group"><button id="btnAddBb"><i class="fas fa-plus"></i> 添加指令</button></div>
+        <div id="bbListWrap"></div>
+        <div class="last-week-review" style="margin-top:20px; padding:14px; border:1px dashed var(--color-border); border-radius:var(--radius);">
+          <h3 style="margin-bottom:8px;"><i class="fas fa-undo-alt"></i> 上周指令回顾</h3>
+          <div id="lastWeekBbWrap"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 底部导航 -->
+  <nav class="bottom-nav">
+    <button class="nav-tab active" data-page="overview"><i class="fas fa-chart-pie"></i><span>总览</span></button>
+    <button class="nav-tab" data-page="todo"><i class="fas fa-list-ul"></i><span>杂碎</span></button>
+    <button class="nav-tab" data-page="teach"><i class="fas fa-book"></i><span>教学</span></button>
+    <button class="nav-tab" data-page="weekplan"><i class="fas fa-calendar-alt"></i><span>周计划</span></button>
+    <button class="nav-tab" data-page="blackbook"><i class="fas fa-notebook"></i><span>黑本</span></button>
+  </nav>
+
+  <!-- Modals -->
+  <div class="modal-mask" id="modalExport"><div class="modal"><h2>📤 导出数据</h2><p style="margin-bottom:12px;">请选择导出范围：</p><div class="btn-group"><button id="expAll">全部数据</button><button id="expTeachOnly">仅教学记录</button></div><div class="modal-buttons"><button id="closeExportModal">取消</button></div></div></div>
+  <div class="modal-mask" id="modalImport"><div class="modal"><h2>📥 导入预览</h2><div id="importPreview"></div><div class="modal-buttons"><button id="cancelImport">取消</button><button id="confirmImport" style="background:var(--color-accent);color:#fff;">确认导入</button></div></div></div>
+  <div class="modal-mask" id="modalBbNote"><div class="modal"><h2>📝 执行笔记</h2><textarea id="bbNoteText" rows="5" style="width:100%;"></textarea><input type="hidden" id="bbNoteItemId" /><div class="modal-buttons"><button id="cancelBbNote">取消</button><button id="saveBbNote" style="background:var(--color-accent);color:#fff;">保存</button></div></div></div>
+  <div class="modal-mask" id="modalConfirm"><div class="modal"><h2 id="confirmTitle">确认</h2><p id="confirmMessage" style="margin:12px 0;"></p><div class="modal-buttons"><button id="confirmCancel">取消</button><button id="confirmOk" style="background:var(--color-accent);color:#fff;">确定</button></div></div></div>
+  <div class="modal-mask" id="modalTheme"><div class="modal"><h2><i class="fas fa-palette"></i> 选择主题</h2><div class="btn-group" style="justify-content:center; gap:12px;">
+    <button data-theme-val="sunny" style="background:#e67e22; color:#fff; min-width:60px;">暖阳</button>
+    <button data-theme-val="deepsea" style="background:#38bdf8; color:#fff; min-width:60px;">深海</button>
+    <button data-theme-val="forest" style="background:#229954; color:#fff; min-width:60px;">森系</button>
+    <button data-theme-val="twilight" style="background:#a78bfa; color:#fff; min-width:60px;">暮光</button>
+    <button data-theme-val="minimal" style="background:#444; color:#fff; min-width:60px;">极简</button>
+  </div><div class="modal-buttons"><button id="closeThemeModal">关闭</button></div></div></div>
+
+  <div class="toast" id="toast"></div>
+  <button id="pwaInstallBtn" style="display:none; position:fixed; bottom:80px; right:16px; z-index:50; background:var(--color-accent); color:#fff; border-radius:50px; padding:10px 18px; box-shadow:0 4px 12px rgba(0,0,0,0.3);">
+    <i class="fas fa-download"></i> 安装应用
+  </button>
+
+  <script>
+    // ===================== 1. 数据层（IndexedDB 优先 + localStorage 降级） =====================
+    const DB_NAME = "xiaole_teacher_db";
+    const DB_STORE = "app_data";
+    const BACKUP_KEY = "xiaole_app_backup";
+    const AUTO_BACKUP_KEY = "xiaole_last_auto_backup";
+    let dbInstance = null;
+
+    function getDefaultAppData() {
+      return {
+        meta: { hideDoneTodo: false, theme: 'sunny', animations: true },
+        todos: [],
+        teachRecords: [],
+        weekPlans: {},
+        blackBook: {},
+        templates: []
+      };
+    }
+
+    function initIndexedDB() {
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open(DB_NAME, 1);
+        req.onupgradeneeded = e => {
+          const db = e.target.result;
+          if (!db.objectStoreNames.contains(DB_STORE)) {
+            db.createObjectStore(DB_STORE);
+          }
+        };
+        req.onsuccess = e => {
+          dbInstance = e.target.result;
+          resolve(dbInstance);
+        };
+        req.onerror = e => reject(e.target.error);
+      });
+    }
+
+    function idbSave(data) {
+      if (!dbInstance) return Promise.reject('DB not init');
+      return new Promise((resolve, reject) => {
+        const tx = dbInstance.transaction(DB_STORE, 'readwrite');
+        const store = tx.objectStore(DB_STORE);
+        const req = store.put(data, 'main');
+        req.onsuccess = () => resolve(true);
+        req.onerror = e => reject(e.target.error);
+      });
+    }
+
+    function idbLoad() {
+      if (!dbInstance) return Promise.reject('DB not init');
+      return new Promise((resolve, reject) => {
+        const tx = dbInstance.transaction(DB_STORE, 'readonly');
+        const store = tx.objectStore(DB_STORE);
+        const req = store.get('main');
+        req.onsuccess = () => resolve(req.result || null);
+        req.onerror = e => reject(e.target.error);
+      });
+    }
+
+    async function robustSaveData(data) {
+      try {
+        await initIndexedDB();
+        await idbSave(data);
+        localStorage.setItem(BACKUP_KEY, JSON.stringify(data));
+        autoBackupIfNeed(data);
+        return true;
+      } catch (err) {
+        console.warn('IndexedDB 写入失败，降级 localStorage', err);
+        localStorage.setItem(BACKUP_KEY, JSON.stringify(data));
+        return true;
+      }
+    }
+
+    async function robustLoadData() {
+      let data = null;
+      try {
+        await initIndexedDB();
+        data = await idbLoad();
+      } catch (e) {
+        console.warn('IndexedDB 读取失败', e);
+      }
+      if (!data) {
+        const raw = localStorage.getItem(BACKUP_KEY);
+        if (raw) {
+          try { data = JSON.parse(raw); } catch (e) { data = null; }
+          if (data) {
+            try { await initIndexedDB(); await idbSave(data); } catch (e) {}
+          }
+        }
+      }
+      if (!data) {
+        data = getDefaultAppData();
+      }
+      const def = getDefaultAppData();
+      for (let k in def) {
+        if (!(k in data)) data[k] = def[k];
+      }
+      data.meta = Object.assign({}, def.meta, data.meta || {});
+      data.todos = Array.isArray(data.todos) ? data.todos : [];
+      data.teachRecords = Array.isArray(data.teachRecords) ? data.teachRecords : [];
+      data.templates = Array.isArray(data.templates) ? data.templates : [];
+      data.weekPlans = data.weekPlans || {};
+      data.blackBook = data.blackBook || {};
+      return data;
+    }
+
+    function autoBackupIfNeed(data) {
+      const now = Date.now();
+      const last = Number(localStorage.getItem(AUTO_BACKUP_KEY) || 0);
+      const SEVEN_DAY = 7 * 24 * 3600 * 1000;
+      if (now - last > SEVEN_DAY) {
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `小乐工作台自动备份_${new Date().toISOString().slice(0,10)}.json`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        localStorage.setItem(AUTO_BACKUP_KEY, String(now));
+      }
+    }
+
+    function manualBackup() {
+      const data = appData;
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `小乐工作台手动备份_${new Date().toISOString().slice(0,10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      showToast('备份文件已下载');
+    }
+
+    let appData = getDefaultAppData();
+
+    function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+    function getISOWeekStr(d) {
+      const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+      const dayNum = t.getUTCDay() || 7;
+      t.setUTCDate(t.getUTCDate() + 4 - dayNum);
+      const yearStart = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
+      const weekNo = Math.ceil(((t - yearStart) / 86400000 + 1) / 7);
+      return t.getUTCFullYear() + '-W' + String(weekNo).padStart(2, '0');
+    }
+    function getDateFromISOWeek(weekStr) {
+      const [y, w] = weekStr.split('-W').map(Number);
+      const jan4 = new Date(y, 0, 4);
+      const day = jan4.getDay() || 7;
+      const firstMonday = new Date(jan4);
+      firstMonday.setDate(jan4.getDate() - day + 1);
+      const res = new Date(firstMonday);
+      res.setDate(firstMonday.getDate() + (w - 1) * 7);
+      return res;
+    }
+    function nextWeekStr(weekStr) { const d = getDateFromISOWeek(weekStr); d.setDate(d.getDate() + 7); return getISOWeekStr(d); }
+    function prevWeekStr(weekStr) { const d = getDateFromISOWeek(weekStr); d.setDate(d.getDate() - 7); return getISOWeekStr(d); }
+    function todayStr() { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
+    function escapeHtml(s) { if (!s) return ''; const div = document.createElement('div'); div.textContent = s; return div.innerHTML; }
+
+    function showToast(msg) {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.classList.add('show');
+      clearTimeout(el._timer);
+      el._timer = setTimeout(() => el.classList.remove('show'), 1800);
+    }
+    function showConfirm(title, msg) {
+      return new Promise(resolve => {
+        const modal = document.getElementById('modalConfirm');
+        document.getElementById('confirmTitle').textContent = title;
+        document.getElementById('confirmMessage').textContent = msg;
+        modal.classList.add('open');
+        const ok = document.getElementById('confirmOk');
+        const cancel = document.getElementById('confirmCancel');
+        const cleanup = () => { modal.classList.remove('open'); ok.removeEventListener('click', onOk); cancel.removeEventListener('click', onCancel); };
+        const onOk = () => { cleanup(); resolve(true); };
+        const onCancel = () => { cleanup(); resolve(false); };
+        ok.addEventListener('click', onOk);
+        cancel.addEventListener('click', onCancel);
+        modal.addEventListener('click', (e) => { if (e.target === modal) onCancel(); }, { once: true });
+      });
+    }
+
+    // ===================== 2. 主题 & 动画 =====================
+    function applyTheme(name) {
+      document.documentElement.setAttribute('data-theme', name);
+      appData.meta.theme = name;
+      saveData();
+    }
+    function toggleAnimations(on) {
+      appData.meta.animations = on;
+      document.body.classList.toggle('no-anim', !on);
+      saveData();
+    }
+    function loadTheme() { applyTheme(appData.meta.theme || 'sunny'); }
+    function loadAnim() { toggleAnimations(appData.meta.animations !== false); }
+
+    // ===================== 3. 总览页 =====================
+    function renderOverview() {
+      // 统计
+      const todos = appData.todos;
+      const total = todos.length;
+      const done = todos.filter(t => t.done).length;
+      const rate = total === 0 ? 0 : Math.round((done / total) * 100);
+      document.getElementById('stat-todo-rate').textContent = total === 0 ? '无' : rate + '%';
+      document.getElementById('stat-teach-count').textContent = appData.teachRecords.length;
+      const week = document.getElementById('weekPicker').value || getISOWeekStr(new Date());
+      const pl = appData.weekPlans[week];
+      let totalTasks = 0, doneTasks = 0;
+      if (pl && pl.sections) {
+        ['main','web','finance','life'].forEach(sec => {
+          const tasks = pl.sections[sec] || [];
+          totalTasks += tasks.length;
+          doneTasks += tasks.filter(t => t.done).length;
+        });
+      }
+      document.getElementById('stat-week-progress').textContent = totalTasks === 0 ? '无' : doneTasks + '/' + totalTasks;
+      const weeks = Object.keys(appData.blackBook).filter(k => (appData.blackBook[k]?.items||[]).length > 0);
+      document.getElementById('stat-black-weeks').textContent = weeks.length;
+
+      // 环形进度
+      const ring = document.getElementById('ringTodo');
+      if (ring) {
+        const circumference = 314.16;
+        const offset = circumference - (rate / 100) * circumference;
+        ring.style.strokeDashoffset = offset;
+      }
+
+      // 时间线
+      const timeline = document.getElementById('overviewTimeline');
+      const items = [];
+      appData.todos.forEach(t => {
+        items.push({ type: '杂碎', text: t.content, time: t.createdAt, id: t.id, module: 'todo', done: t.done });
+      });
+      appData.teachRecords.forEach(r => {
+        items.push({ type: '教学', text: r.content, time: r.createdAt, id: r.id, module: 'teach' });
+      });
+      Object.entries(appData.weekPlans).forEach(([wk, plan]) => {
+        ['main','web','finance','life'].forEach(sec => {
+          (plan.sections?.[sec] || []).forEach(t => {
+            items.push({ type: '周计划', text: t.text, time: t.createdAt || Date.now(), id: t.id, module: 'weekplan', week: wk });
+          });
+        });
+      });
+      Object.entries(appData.blackBook).forEach(([wk, bb]) => {
+        (bb.items || []).forEach(it => {
+          items.push({ type: '黑本', text: it.text, time: it.createdAt || Date.now(), id: it.id, module: 'blackbook', week: wk });
+        });
+      });
+      items.sort((a,b) => b.time - a.time);
+      const recent = items.slice(0, 8);
+      if (recent.length === 0) {
+        timeline.innerHTML = `<div class="empty-tip" style="padding:12px 0;"><span class="illustration" style="width:40px;height:40px;line-height:40px;font-size:1.5rem;">📭</span><div class="desc" style="font-size:0.9rem;">暂无动态，开始记录吧</div></div>`;
+        return;
+      }
+      let html = '';
+      recent.forEach(item => {
+        const timeStr = new Date(item.time).toLocaleString('zh-CN', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
+        html += `
+          <div class="timeline-item" data-module="${item.module}" data-id="${item.id}" data-week="${item.week || ''}">
+            <span class="badge">${item.type}</span>
+            <span class="content">${escapeHtml(item.text)}</span>
+            <span class="time">${timeStr}</span>
+          </div>
+        `;
+      });
+      timeline.innerHTML = html;
+      timeline.querySelectorAll('.timeline-item').forEach(el => {
+        el.addEventListener('click', function() {
+          const module = this.dataset.module;
+          const id = this.dataset.id;
+          const week = this.dataset.week;
+          switchPage(module === 'todo' ? 'todo' :
+                     module === 'teach' ? 'teach' :
+                     module === 'weekplan' ? 'weekplan' : 'blackbook');
+          if (module === 'weekplan' && week) {
+            document.getElementById('weekPicker').value = week;
+            setTimeout(() => renderWeekPlan(), 50);
+          }
+          if (module === 'blackbook' && week) {
+            document.getElementById('bbWeekPicker').value = week;
+            setTimeout(() => { renderBlackBook(); renderLastWeek(); }, 50);
+          }
+          setTimeout(() => {
+            const selector = module === 'todo' ? `.todo-item[data-id="${id}"]` :
+                             module === 'teach' ? `.record-card[data-id="${id}"]` :
+                             module === 'weekplan' ? `.task-item[data-id="${id}"]` :
+                             `.bb-item[data-id="${id}"]`;
+            scrollToItem(selector);
+          }, 150);
+        });
+      });
+    }
+
+    // ===================== 4. 导航 & 搜索 =====================
+    const pages = document.querySelectorAll('.page');
+    const tabs = document.querySelectorAll('.nav-tab');
+    let currentPage = 'overview';
+    function switchPage(name) {
+      currentPage = name;
+      pages.forEach(p => p.classList.toggle('active', p.id === 'page-'+name));
+      tabs.forEach(t => t.classList.toggle('active', t.dataset.page === name));
+      if (name === 'overview') renderOverview();
+      if (name === 'todo') renderTodos();
+      if (name === 'teach') { renderTeachRecords(); updateSuggestions(); }
+      if (name === 'weekplan') { renderWeekPlan(); renderOverview(); }
+      if (name === 'blackbook') { renderBlackBook(); renderLastWeek(); }
+    }
+    tabs.forEach(tab => tab.addEventListener('click', () => switchPage(tab.dataset.page)));
+
+    // ===================== 搜索 =====================
+    const searchOverlay = document.getElementById('searchOverlay');
+    const searchInput = document.getElementById('searchInput');
+    const searchResults = document.getElementById('searchResults');
+    document.getElementById('openSearchBtn').addEventListener('click', () => {
+      searchOverlay.classList.add('open');
+      searchInput.value = '';
+      searchResults.innerHTML = '';
+      setTimeout(() => searchInput.focus(), 80);
+    });
+    document.getElementById('closeSearchBtn').addEventListener('click', () => searchOverlay.classList.remove('open'));
+    searchOverlay.addEventListener('click', (e) => { if (e.target === searchOverlay) searchOverlay.classList.remove('open'); });
+
+    searchInput.addEventListener('input', () => {
+      const q = searchInput.value.trim();
+      if (!q) { searchResults.innerHTML = ''; return; }
+      const results = [];
+      const ql = q.toLowerCase();
+      appData.todos.forEach(t => { if (t.content.toLowerCase().includes(ql)) results.push({type:'todo', title:'杂碎', text:t.content, id:t.id}); });
+      appData.teachRecords.forEach(r => {
+        const full = [r.className, r.subject, r.content, r.homework, r.absent].join(' ');
+        if (full.toLowerCase().includes(ql)) results.push({type:'teach', title:'教学记录 '+r.date, text:r.content, id:r.id});
+      });
+      Object.entries(appData.weekPlans).forEach(([wk, pl]) => {
+        ['main','web','finance','life'].forEach(sec => {
+          (pl.sections?.[sec]||[]).forEach(t => {
+            if (t.text.toLowerCase().includes(ql)) results.push({type:'weekplan', title:'周计划 '+wk, text:t.text, week:wk, taskId:t.id, section:sec});
+          });
+        });
+      });
+      Object.entries(appData.blackBook).forEach(([wk, bb]) => {
+        (bb.items||[]).forEach(it => {
+          if (it.text.toLowerCase().includes(ql) || (it.note && it.note.toLowerCase().includes(ql))) {
+            results.push({type:'blackbook', title:'黑本 '+wk, text:it.text, week:wk, itemId:it.id});
+          }
+        });
+      });
+      if (results.length === 0) { searchResults.innerHTML = `<div class="empty-tip"><div class="illustration">🔍</div><div class="desc">未找到匹配内容</div></div>`; return; }
+      let html = '';
+      results.slice(0, 30).forEach(res => {
+        const highlighted = res.text.replace(new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi'), match => `<span class="highlight">${match}</span>`);
+        html += `<div class="search-item" data-type="${res.type}" data-id="${res.id||''}" data-week="${res.week||''}" data-taskid="${res.taskId||''}" data-section="${res.section||''}" data-itemid="${res.itemId||''}">
+          <div class="title">${escapeHtml(res.title)}</div>
+          <div class="text">${highlighted}</div>
+        </div>`;
+      });
+      searchResults.innerHTML = html;
+      searchResults.querySelectorAll('.search-item').forEach(el => {
+        el.addEventListener('click', () => {
+          const type = el.dataset.type, id = el.dataset.id, week = el.dataset.week, taskId = el.dataset.taskid, itemId = el.dataset.itemid;
+          searchOverlay.classList.remove('open');
+          if (type === 'todo') { switchPage('todo'); setTimeout(() => scrollToItem(`.todo-item[data-id="${id}"]`), 120); }
+          else if (type === 'teach') { switchPage('teach'); setTimeout(() => scrollToItem(`.record-card[data-id="${id}"]`), 120); }
+          else if (type === 'weekplan' && week) { document.getElementById('weekPicker').value = week; switchPage('weekplan'); setTimeout(() => scrollToItem(`.task-item[data-id="${taskId}"]`), 200); }
+          else if (type === 'blackbook' && week) { document.getElementById('bbWeekPicker').value = week; switchPage('blackbook'); setTimeout(() => scrollToItem(`.bb-item[data-id="${itemId}"]`), 200); }
+        });
+      });
+    });
+
+    function scrollToItem(selector) {
+      setTimeout(() => {
+        const el = document.querySelector(selector);
+        if (!el) return;
+        const editParent = el.closest('.record-edit');
+        if (editParent) editParent.classList.add('open');
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.classList.add('search-flash');
+        setTimeout(() => el.classList.remove('search-flash'), 1200);
+      }, 80);
+    }
+
+    // ===================== 5. 统计（已被renderOverview包含） =====================
+
+    // ===================== 6. 杂碎 =====================
+    const todoInput = document.getElementById('todoInput');
+    const todoListWrap = document.getElementById('todoListWrap');
+    const toggleHideDone = document.getElementById('toggleHideDone');
+    const btnClearDone = document.getElementById('btnClearDone');
+
+    function renderTodos() {
+      toggleHideDone.classList.toggle('on', !!appData.meta.hideDoneTodo);
+      let list = [...appData.todos];
+      list.sort((a,b) => { if (a.pinned && !b.pinned) return -1; if (!a.pinned && b.pinned) return 1; return b.createdAt - a.createdAt; });
+      if (appData.meta.hideDoneTodo) list = list.filter(t => !t.done);
+      if (list.length === 0) {
+        todoListWrap.innerHTML = `<div class="empty-tip"><div class="illustration">🧹</div><div class="desc">暂无杂碎，清闲～</div></div>`;
+        return;
+      }
+      let html = '';
+      list.forEach((item, idx) => {
+        const doneCls = item.done ? 'done' : '';
+        const pinCls = item.pinned ? 'pinned' : '';
+        const time = new Date(item.createdAt).toLocaleString('zh-CN', { hour12: false });
+        html += `<div class="todo-item ${doneCls} stagger-item" data-id="${item.id}" style="animation-delay:${idx*0.04}s">
+          <div class="todo-delete-slide">删除</div>
+          <div class="todo-item-inner">
+            <input type="checkbox" ${item.done?'checked':''} class="todo-check" data-id="${item.id}" />
+            <span class="todo-pin ${pinCls}" data-id="${item.id}"><i class="fas fa-thumbtack"></i></span>
+            <span class="todo-text">${escapeHtml(item.content)}</span>
+            <span class="todo-time">${time}</span>
+            <button class="btn-del" data-id="${item.id}" aria-label="删除"><i class="fas fa-trash-alt"></i></button>
+          </div>
+        </div>`;
+      });
+      todoListWrap.innerHTML = html;
+      // 事件绑定
+      todoListWrap.querySelectorAll('.todo-check').forEach(cb => {
+        cb.addEventListener('change', function() {
+          const item = appData.todos.find(t => t.id === this.dataset.id);
+          if (item) { item.done = this.checked; saveData(); renderTodos(); renderOverview(); }
+        });
+      });
+      todoListWrap.querySelectorAll('.todo-pin').forEach(el => {
+        el.addEventListener('click', function() {
+          const item = appData.todos.find(t => t.id === this.dataset.id);
+          if (item) { item.pinned = !item.pinned; saveData(); renderTodos(); }
+        });
+      });
+      todoListWrap.querySelectorAll('.btn-del').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          const id = this.dataset.id;
+          showConfirm('删除杂碎', '确定删除该条杂碎吗？').then(ok => {
+            if (ok) { appData.todos = appData.todos.filter(t => t.id !== id); saveData(); renderTodos(); renderOverview(); showToast('已删除'); }
+          });
+        });
+      });
+      // 左滑手势
+      let startX = 0, currentX = 0, swiping = false;
+      const wrap = todoListWrap;
+      wrap.addEventListener('touchstart', function(e) {
+        const item = e.target.closest('.todo-item');
+        if (!item) return;
+        const inner = item.querySelector('.todo-item-inner');
+        if (inner && inner.style.transform === 'translateX(-86px)') { inner.style.transform = 'translateX(0px)'; item.classList.remove('swiped'); }
+        startX = e.touches[0].clientX; swiping = true; currentX = 0;
+      }, { passive: true });
+      wrap.addEventListener('touchmove', function(e) {
+        if (!swiping) return;
+        const item = e.target.closest('.todo-item');
+        if (!item) return;
+        const inner = item.querySelector('.todo-item-inner');
+        if (!inner) return;
+        const dx = e.touches[0].clientX - startX;
+        if (dx > 0) { currentX = 0; return; }
+        currentX = Math.max(-86, dx);
+        inner.style.transform = `translateX(${currentX}px)`;
+      }, { passive: true });
+      wrap.addEventListener('touchend', function(e) {
+        if (!swiping) return;
+        swiping = false;
+        const item = e.target.closest('.todo-item');
+        if (!item) return;
+        const inner = item.querySelector('.todo-item-inner');
+        if (!inner) return;
+        if (Math.abs(currentX) > 44) {
+          inner.style.transform = 'translateX(-86px)';
+          item.classList.add('swiped');
+          const delSlide = item.querySelector('.todo-delete-slide');
+          if (delSlide) {
+            delSlide.onclick = function() {
+              const id = item.dataset.id;
+              showConfirm('删除杂碎', '确定删除该条杂碎吗？').then(ok => {
+                if (ok) { appData.todos = appData.todos.filter(t => t.id !== id); saveData(); renderTodos(); renderOverview(); showToast('已删除'); }
+              });
+            };
+          }
+        } else { inner.style.transform = 'translateX(0px)'; item.classList.remove('swiped'); }
+        currentX = 0;
+      }, { passive: true });
+      document.addEventListener('click', function() {
+        wrap.querySelectorAll('.todo-item.swiped').forEach(el => {
+          const inner = el.querySelector('.todo-item-inner');
+          if (inner) { inner.style.transform = 'translateX(0px)'; el.classList.remove('swiped'); }
+        });
+      });
+    }
+
+    toggleHideDone.addEventListener('click', function() {
+      appData.meta.hideDoneTodo = !appData.meta.hideDoneTodo;
+      saveData(); renderTodos();
+    });
+    btnClearDone.addEventListener('click', function() {
+      const hasDone = appData.todos.some(t => t.done);
+      if (!hasDone) { showToast('没有已完成项'); return; }
+      showConfirm('清空已完成', '确定清空所有已完成的杂碎吗？该操作不可恢复！').then(ok => {
+        if (ok) { appData.todos = appData.todos.filter(t => !t.done); saveData(); renderTodos(); renderOverview(); showToast('已清空'); }
+      });
+    });
+    function addTodo() {
+      const text = todoInput.value.trim();
+      if (!text) return;
+      appData.todos.unshift({ id: genId(), content: text, done: false, pinned: false, createdAt: Date.now() });
+      todoInput.value = ''; saveData(); renderTodos(); renderOverview(); showToast('已添加');
+    }
+    todoInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addTodo(); } });
+    document.getElementById('todoAddBtn').addEventListener('click', addTodo);
+
+    // ===================== 7. 教学 =====================
+    const teachDate = document.getElementById('teachDate');
+    const teachClass = document.getElementById('teachClass');
+    const teachSubject = document.getElementById('teachSubject');
+    const teachContent = document.getElementById('teachContent');
+    const teachHomework = document.getElementById('teachHomework');
+    const teachAbsent = document.getElementById('teachAbsent');
+    const btnSaveTeach = document.getElementById('btnSaveTeach');
+    const btnCopyLast = document.getElementById('btnCopyLast');
+    const teachRecordWrap = document.getElementById('teachRecordWrap');
+    const ddClass = document.getElementById('ddClass');
+    const ddSubject = document.getElementById('ddSubject');
+    teachDate.value = todayStr();
+
+    document.querySelectorAll('.quick-btn').forEach(b => {
+      b.addEventListener('click', () => { teachContent.value = b.dataset.text; teachContent.focus(); });
+    });
+
+    const teachInputs = [teachDate, teachClass, teachSubject, teachContent, teachHomework, teachAbsent];
+    teachInputs.forEach((inp, idx) => {
+      inp.addEventListener('keydown', function(e) {
+        if (e.key !== 'Enter') return;
+        if (this.tagName === 'TEXTAREA' && !e.shiftKey) { e.preventDefault(); doSaveTeach(); return; }
+        if (this.tagName === 'TEXTAREA' && e.shiftKey) return;
+        e.preventDefault();
+        if (idx < teachInputs.length - 1) teachInputs[idx+1].focus();
+        else doSaveTeach();
+      });
+    });
+
+    function doSaveTeach() {
+      const date = teachDate.value, cls = teachClass.value.trim(), subject = teachSubject.value.trim();
+      const content = teachContent.value.trim(), homework = teachHomework.value.trim(), absent = teachAbsent.value.trim();
+      if (!content) { showToast('请输入教学内容'); return; }
+      if (!date) { showToast('请选择日期'); return; }
+      appData.teachRecords.unshift({ id: genId(), date, className: cls, subject, content, homework, absent, createdAt: Date.now() });
+      saveData(); teachContent.value = ''; teachHomework.value = ''; teachAbsent.value = '';
+      renderTeachRecords(); updateSuggestions(); renderOverview(); showToast('已保存');
+    }
+    btnSaveTeach.addEventListener('click', doSaveTeach);
+
+    btnCopyLast.addEventListener('click', function() {
+      if (appData.teachRecords.length === 0) { showToast('暂无历史记录'); return; }
+      showConfirm('复制上节课', '将覆盖当前表单未保存内容，确定继续？').then(ok => {
+        if (!ok) return;
+        const last = appData.teachRecords[0];
+        teachClass.value = last.className || ''; teachSubject.value = last.subject || '';
+        teachContent.value = last.content || ''; teachHomework.value = last.homework || '';
+        teachAbsent.value = last.absent || ''; teachDate.value = todayStr();
+        showToast('已复制上节课');
+      });
+    });
+
+    function updateSuggestions() {
+      const classes = new Set(), subjects = new Set();
+      appData.teachRecords.forEach(r => { if (r.className) classes.add(r.className); if (r.subject) subjects.add(r.subject); });
+      const renderDrop = (inputEl, dropEl, set) => {
+        const q = inputEl.value.trim().toLowerCase();
+        dropEl.innerHTML = '';
+        if (!q) { dropEl.style.display = 'none'; return; }
+        const filtered = Array.from(set).filter(s => s.toLowerCase().includes(q));
+        if (filtered.length === 0) { dropEl.style.display = 'none'; return; }
+        dropEl.style.display = 'block';
+        filtered.forEach(item => {
+          const div = document.createElement('div');
+          div.className = 'auto-item';
+          div.textContent = item;
+          div.addEventListener('click', () => { inputEl.value = item; dropEl.style.display = 'none'; inputEl.focus(); });
+          dropEl.appendChild(div);
+        });
+      };
+      teachClass.addEventListener('input', () => renderDrop(teachClass, ddClass, classes));
+      teachSubject.addEventListener('input', () => renderDrop(teachSubject, ddSubject, subjects));
+      document.addEventListener('click', (e) => {
+        if (!teachClass.contains(e.target) && !ddClass.contains(e.target)) ddClass.style.display = 'none';
+        if (!teachSubject.contains(e.target) && !ddSubject.contains(e.target)) ddSubject.style.display = 'none';
+      });
+    }
+
+    function renderTeachRecords() {
+      const list = [...appData.teachRecords];
+      if (list.length === 0) { teachRecordWrap.innerHTML = `<div class="empty-tip"><div class="illustration">📖</div><div class="desc">暂无教学流水账</div></div>`; return; }
+      const now = new Date();
+      const today = now.toISOString().split('T')[0];
+      const yesterday = new Date(now); yesterday.setDate(yesterday.getDate() - 1); const yestStr = yesterday.toISOString().split('T')[0];
+      const weekStart = new Date(now); weekStart.setDate(weekStart.getDate() - weekStart.getDay() + 1);
+      const groups = { '今天': [], '昨天': [], '本周': [], '更早': [] };
+      list.forEach(r => {
+        if (r.date === today) groups['今天'].push(r);
+        else if (r.date === yestStr) groups['昨天'].push(r);
+        else { const d = new Date(r.date); if (d >= weekStart) groups['本周'].push(r); else groups['更早'].push(r); }
+      });
+      let html = '';
+      ['今天','昨天','本周','更早'].forEach(label => {
+        const items = groups[label];
+        if (items.length === 0) return;
+        html += `<div class="record-group"><div class="record-group-title">📌 ${label}</div>`;
+        items.forEach((r, idx) => {
+          html += `<div class="record-card stagger-item" data-id="${r.id}" style="animation-delay:${idx*0.04}s">
+            <div class="meta">${escapeHtml(r.date)}｜${escapeHtml(r.className||'无班级')}｜${escapeHtml(r.subject||'无科目')}</div>
+            <div>${escapeHtml(r.content)}</div>
+            <div class="record-edit" data-id="${r.id}">
+              <div class="form-row"><label>日期</label><input type="date" class="ed-date" value="${escapeHtml(r.date)}" /></div>
+              <div class="form-row"><label>班级</label><input class="ed-class" value="${escapeHtml(r.className||'')}" /></div>
+              <div class="form-row"><label>科目</label><input class="ed-subject" value="${escapeHtml(r.subject||'')}" /></div>
+              <div class="form-row"><label>教学内容</label><textarea class="ed-content" rows="2">${escapeHtml(r.content||'')}</textarea></div>
+              <div class="form-row"><label>作业布置</label><textarea class="ed-homework" rows="2">${escapeHtml(r.homework||'')}</textarea></div>
+              <div class="form-row"><label>缺勤名单</label><input class="ed-absent" value="${escapeHtml(r.absent||'')}" /></div>
+              <div class="btn-group">
+                <button class="btn-save-edit" style="background:var(--color-accent);color:#fff;"><i class="fas fa-save"></i> 保存修改</button>
+                <button class="btn-del-rec"><i class="fas fa-trash-alt"></i> 删除</button>
+              </div>
+            </div>
+          </div>`;
+        });
+        html += '</div>';
+      });
+      teachRecordWrap.innerHTML = html;
+      teachRecordWrap.querySelectorAll('.record-card').forEach(card => {
+        const id = card.dataset.id;
+        const editWrap = card.querySelector('.record-edit');
+        card.addEventListener('click', function(e) {
+          if (e.target.closest('button') || e.target.closest('input') || e.target.closest('textarea')) return;
+          editWrap.classList.toggle('open');
+        });
+        card.querySelector('.btn-save-edit').addEventListener('click', function(e) {
+          e.stopPropagation();
+          const rec = appData.teachRecords.find(r => r.id === id);
+          if (!rec) return;
+          rec.date = card.querySelector('.ed-date').value;
+          rec.className = card.querySelector('.ed-class').value.trim();
+          rec.subject = card.querySelector('.ed-subject').value.trim();
+          rec.content = card.querySelector('.ed-content').value.trim();
+          rec.homework = card.querySelector('.ed-homework').value.trim();
+          rec.absent = card.querySelector('.ed-absent').value.trim();
+          saveData(); renderTeachRecords(); updateSuggestions(); renderOverview(); showToast('已更新');
+        });
+        card.querySelector('.btn-del-rec').addEventListener('click', function(e) {
+          e.stopPropagation();
+          showConfirm('删除记录', '确定删除该条教学记录吗？').then(ok => {
+            if (ok) { appData.teachRecords = appData.teachRecords.filter(r => r.id !== id); saveData(); renderTeachRecords(); updateSuggestions(); renderOverview(); showToast('已删除'); }
+          });
+        });
+      });
+    }
+
+    // ===================== 8. 周计划 =====================
+    const weekPicker = document.getElementById('weekPicker');
+    const planWrap = document.getElementById('planWrap');
+    const templateSelect = document.getElementById('templateSelect');
+    weekPicker.value = getISOWeekStr(new Date());
+    weekPicker.addEventListener('change', () => { renderWeekPlan(); renderOverview(); });
+    const sectionMap = { main: '教学主线', web: '网站动作', finance: '财务红线', life: '生活锚点' };
+    const sectionKeys = ['main','web','finance','life'];
+
+    function getWeekPlan(weekStr) {
+      if (!appData.weekPlans[weekStr]) appData.weekPlans[weekStr] = { sections: { main:[], web:[], finance:[], life:[] } };
+      return appData.weekPlans[weekStr];
+    }
+
+    function renderWeekPlan() {
+      const w = weekPicker.value;
+      const plan = getWeekPlan(w);
+      let html = '';
+      sectionKeys.forEach(sec => {
+        const tasks = plan.sections[sec] || [];
+        const done = tasks.filter(t => t.done).length;
+        const total = tasks.length;
+        html += `<div class="plan-section">
+          <h3><span><i class="fas fa-${sec==='main'?'book':sec==='web'?'globe':sec==='finance'?'coins':'anchor'}"></i> ${sectionMap[sec]}</span><span>${done}/${total}</span></h3>
+          <div style="display:flex; gap:6px; margin-bottom:8px;">
+            <input type="text" class="plan-task-input" data-section="${sec}" placeholder="添加任务…" style="flex:1; min-height:36px; padding:6px 10px; border-radius:30px;" />
+            <button class="plan-add-btn" data-section="${sec}" style="min-height:36px; min-width:36px; padding:0 12px;"><i class="fas fa-plus"></i></button>
+          </div>
+          <div class="plan-tasks" data-section="${sec}">
+            ${tasks.map((t, idx) => `
+              <div class="task-item ${t.done?'done':''} stagger-item" data-id="${t.id}" data-section="${sec}" style="animation-delay:${idx*0.04}s">
+                <input type="checkbox" ${t.done?'checked':''} class="task-check" data-id="${t.id}" data-section="${sec}" />
+                <span class="task-text">${escapeHtml(t.text)}</span>
+                <button class="btn-del task-del" data-id="${t.id}" data-section="${sec}" aria-label="删除"><i class="fas fa-times"></i></button>
+              </div>
+            `).join('')}
+          </div>
+        </div>`;
+      });
+      planWrap.innerHTML = html;
+      planWrap.querySelectorAll('.plan-add-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const sec = this.dataset.section;
+          const input = this.closest('.plan-section').querySelector('.plan-task-input');
+          const text = input.value.trim();
+          if (!text) return;
+          const plan = getWeekPlan(w);
+          plan.sections[sec].push({ id: genId(), text, done: false });
+          saveData(); renderWeekPlan(); renderOverview(); showToast('已添加任务');
+        });
+      });
+      planWrap.querySelectorAll('.plan-task-input').forEach(inp => {
+        inp.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); const btn = this.closest('.plan-section').querySelector('.plan-add-btn'); if (btn) btn.click(); } });
+      });
+      planWrap.querySelectorAll('.task-check').forEach(cb => {
+        cb.addEventListener('change', function() {
+          const id = this.dataset.id, sec = this.dataset.section;
+          const plan = getWeekPlan(w);
+          const task = plan.sections[sec].find(t => t.id === id);
+          if (task) { task.done = this.checked; saveData(); renderWeekPlan(); renderOverview(); }
+        });
+      });
+      planWrap.querySelectorAll('.task-del').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const id = this.dataset.id, sec = this.dataset.section;
+          showConfirm('删除任务', '确定删除该任务吗？').then(ok => {
+            if (ok) { const plan = getWeekPlan(w); plan.sections[sec] = plan.sections[sec].filter(t => t.id !== id); saveData(); renderWeekPlan(); renderOverview(); showToast('已删除'); }
+          });
+        });
+      });
+      renderTemplateSelect();
+    }
+
+    function renderTemplateSelect() {
+      const sel = templateSelect;
+      sel.innerHTML = '<option value="">-- 选择模板 --</option>';
+      appData.templates.forEach((tpl, idx) => {
+        const opt = document.createElement('option');
+        opt.value = String(idx);
+        opt.textContent = tpl.name || `模板${idx+1}`;
+        sel.appendChild(opt);
+      });
+    }
+
+    document.getElementById('btnSaveTemplate').addEventListener('click', function() {
+      const w = weekPicker.value;
+      const plan = getWeekPlan(w);
+      const name = prompt('请输入模板名称：');
+      if (!name || !name.trim()) return;
+      const sections = {};
+      sectionKeys.forEach(sec => { sections[sec] = (plan.sections[sec]||[]).map(t => ({ text: t.text })); });
+      appData.templates.push({ name: name.trim(), sections });
+      saveData(); renderTemplateSelect(); showToast('模板已保存');
+    });
+    document.getElementById('btnLoadTemplate').addEventListener('click', function() {
+      const idx = parseInt(templateSelect.value);
+      if (isNaN(idx) || !appData.templates[idx]) { showToast('请选择有效模板'); return; }
+      const tpl = appData.templates[idx];
+      const w = weekPicker.value;
+      const plan = getWeekPlan(w);
+      sectionKeys.forEach(sec => { plan.sections[sec] = (tpl.sections[sec]||[]).map(text => ({ id: genId(), text, done: false })); });
+      saveData(); renderWeekPlan(); renderOverview(); showToast('已载入模板');
+    });
+    document.getElementById('btnRollNext').addEventListener('click', function() {
+      const curW = weekPicker.value;
+      const nextW = nextWeekStr(curW);
+      const curPlan = getWeekPlan(curW);
+      const nextPlan = getWeekPlan(nextW);
+      let hasUndone = false;
+      sectionKeys.forEach(sec => {
+        const undone = (curPlan.sections[sec]||[]).filter(t => !t.done);
+        if (undone.length > 0) { hasUndone = true; undone.forEach(t => { nextPlan.sections[sec].push({ id: genId(), text: t.text, done: false }); }); }
+      });
+      if (!hasUndone) { showToast('当前周没有未完成任务'); return; }
+      saveData(); renderWeekPlan(); renderOverview(); showToast('未完成任务已复制到下周');
+    });
+
+    // ===================== 9. 黑本 =====================
+    const bbWeekPicker = document.getElementById('bbWeekPicker');
+    const bbInput = document.getElementById('bbInput');
+    const btnAddBb = document.getElementById('btnAddBb');
+    const bbListWrap = document.getElementById('bbListWrap');
+    const lastWeekBbWrap = document.getElementById('lastWeekBbWrap');
+    const modalBbNote = document.getElementById('modalBbNote');
+    const bbNoteText = document.getElementById('bbNoteText');
+    const bbNoteItemId = document.getElementById('bbNoteItemId');
+    bbWeekPicker.value = getISOWeekStr(new Date());
+    bbWeekPicker.addEventListener('change', () => { renderBlackBook(); renderLastWeek(); });
+
+    function getBbObj(weekStr) { if (!appData.blackBook[weekStr]) appData.blackBook[weekStr] = { items: [] }; return appData.blackBook[weekStr]; }
+
+    function renderBlackBook() {
+      const w = bbWeekPicker.value;
+      const bb = getBbObj(w);
+      const items = bb.items || [];
+      if (items.length === 0) { bbListWrap.innerHTML = `<div class="empty-tip"><div class="illustration">📓</div><div class="desc">本周暂无决策指令</div></div>`; }
+      else {
+        let html = '';
+        items.forEach((it, idx) => {
+          const doneCls = it.done ? 'done' : '';
+          html += `<div class="bb-item ${doneCls} stagger-item" data-id="${it.id}" style="animation-delay:${idx*0.04}s">
+            <input type="checkbox" ${it.done?'checked':''} class="bb-check" data-id="${it.id}" />
+            <span class="bb-text">${escapeHtml(it.text)}</span>
+            <button class="bb-note-btn" data-id="${it.id}"><i class="fas fa-pen"></i></button>
+            <button class="btn-del" data-id="${it.id}" aria-label="删除"><i class="fas fa-trash-alt"></i></button>
+          </div>`;
+        });
+        bbListWrap.innerHTML = html;
+        bbListWrap.querySelectorAll('.bb-check').forEach(cb => {
+          cb.addEventListener('change', function() {
+            const id = this.dataset.id;
+            const item = bb.items.find(i => i.id === id);
+            if (item) { item.done = this.checked; saveData(); renderBlackBook(); renderLastWeek(); renderOverview(); }
+          });
+        });
+        bbListWrap.querySelectorAll('.bb-note-btn').forEach(btn => {
+          btn.addEventListener('click', function() {
+            const id = this.dataset.id;
+            const item = bb.items.find(i => i.id === id);
+            if (item) { bbNoteItemId.value = id; bbNoteText.value = item.note || ''; modalBbNote.classList.add('open'); }
+          });
+        });
+        bbListWrap.querySelectorAll('.bb-item .btn-del').forEach(btn => {
+          btn.addEventListener('click', function() {
+            const id = this.dataset.id;
+            showConfirm('删除指令', '确定删除该条指令吗？').then(ok => {
+              if (ok) { bb.items = bb.items.filter(i => i.id !== id); saveData(); renderBlackBook(); renderLastWeek(); renderOverview(); showToast('已删除'); }
+            });
+          });
+        });
+      }
+    }
+
+    function addBbItem() {
+      const w = bbWeekPicker.value;
+      const bb = getBbObj(w);
+      const text = bbInput.value.trim();
+      if (!text) { showToast('请输入指令内容'); return; }
+      if (bb.items.length >= 3) { showToast('每周最多录入3条指令'); return; }
+      bb.items.push({ id: genId(), text, done: false, note: '' });
+      bbInput.value = ''; saveData(); renderBlackBook(); renderLastWeek(); renderOverview(); showToast('已添加指令');
+    }
+    btnAddBb.addEventListener('click', addBbItem);
+    bbInput.addEventListener('keydown', function(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); addBbItem(); } });
+
+    document.getElementById('saveBbNote').addEventListener('click', function() {
+      const w = bbWeekPicker.value;
+      const bb = getBbObj(w);
+      const id = bbNoteItemId.value;
+      const item = bb.items.find(i => i.id === id);
+      if (!item) { showToast('指令不存在'); return; }
+      item.note = bbNoteText.value.trim();
+      saveData(); renderBlackBook(); renderLastWeek(); modalBbNote.classList.remove('open'); showToast('笔记已保存');
+    });
+    document.getElementById('cancelBbNote').addEventListener('click', function() { modalBbNote.classList.remove('open'); });
+
+    function renderLastWeek() {
+      const w = bbWeekPicker.value;
+      const lastW = prevWeekStr(w);
+      const bb = appData.blackBook[lastW];
+      const items = bb?.items || [];
+      if (items.length === 0) { lastWeekBbWrap.innerHTML = '<div style="color:var(--color-text-secondary);"><i class="fas fa-info-circle"></i> 上周无指令</div>'; return; }
+      let html = '';
+      items.forEach(it => {
+        html += `<div style="display:flex; align-items:center; gap:8px; padding:4px 0; border-bottom:1px solid var(--color-border);">
+          <span>${it.done?'<i class="fas fa-check-circle" style="color:var(--color-accent);"></i>':'<i class="far fa-circle"></i>'}</span>
+          <span>${escapeHtml(it.text)}</span>
+          ${it.note ? `<span style="font-size:0.8rem;color:var(--color-text-secondary);"><i class="fas fa-pen"></i> ${escapeHtml(it.note)}</span>` : ''}
+        </div>`;
+      });
+      lastWeekBbWrap.innerHTML = html;
+    }
+
+    // ===================== 10. 导入导出 =====================
+    document.getElementById('btnExport').addEventListener('click', () => document.getElementById('modalExport').classList.add('open'));
+    document.getElementById('closeExportModal').addEventListener('click', () => document.getElementById('modalExport').classList.remove('open'));
+    document.getElementById('expAll').addEventListener('click', function() { document.getElementById('modalExport').classList.remove('open'); exportData('all'); });
+    document.getElementById('expTeachOnly').addEventListener('click', function() { document.getElementById('modalExport').classList.remove('open'); exportData('teach'); });
+
+    function exportData(mode) {
+      let data, filename; const now = todayStr();
+      if (mode === 'all') { data = appData; filename = `小乐工作台_全部_${now}.json`; }
+      else { data = { _exportType: 'only_teaching', teachRecords: appData.teachRecords }; filename = `小乐工作台_教学记录_${now}.json`; }
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = filename; a.click(); URL.revokeObjectURL(url);
+      showToast('导出成功');
+    }
+
+    function safeImportValidate(raw) {
+      const allowed = ["_exportType","meta","todos","teachRecords","weekPlans","blackBook","templates"];
+      for (let k in raw) {
+        if (!allowed.includes(k)) return false;
+      }
+      return true;
+    }
+
+    document.getElementById('btnImport').addEventListener('click', () => document.getElementById('importFileInput').click());
+    document.getElementById('importFileInput').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(ev) {
+        try {
+          const imported = JSON.parse(ev.target.result);
+          if (!safeImportValidate(imported)) {
+            showToast('导入文件格式异常，拒绝导入');
+            return;
+          }
+          const preview = document.getElementById('importPreview');
+          let html = `<p>共 ${imported.teachRecords?.length || 0} 条教学记录`;
+          if (imported._exportType === 'only_teaching') html += `（仅教学记录模式）</p>`;
+          else html += `，杂碎 ${imported.todos?.length||0} 条，周计划 ${Object.keys(imported.weekPlans||{}).length} 周，黑本 ${Object.keys(imported.blackBook||{}).length} 周</p>`;
+          if (imported.teachRecords && imported.teachRecords.length > 0) {
+            html += `<div style="margin-top:8px; font-size:0.9rem; color:var(--color-text-secondary);">示例：${imported.teachRecords.slice(0,3).map(r=>r.content).join('、')}</div>`;
+          }
+          preview.innerHTML = html;
+          document.getElementById('modalImport').classList.add('open');
+          window._importedData = imported;
+        } catch(err) { showToast('文件格式错误'); }
+      };
+      reader.readAsText(file);
+      e.target.value = '';
+    });
+    document.getElementById('cancelImport').addEventListener('click', () => document.getElementById('modalImport').classList.remove('open'));
+    document.getElementById('confirmImport').addEventListener('click', function() {
+      const imported = window._importedData;
+      if (!imported) return;
+      if (imported._exportType === 'only_teaching') { appData.teachRecords = imported.teachRecords || []; }
+      else {
+        const defaults = getDefaultAppData();
+        appData = Object.assign({}, defaults, imported);
+        appData.meta = Object.assign({}, defaults.meta, imported.meta || {});
+        appData.todos = Array.isArray(appData.todos) ? appData.todos : [];
+        appData.teachRecords = Array.isArray(appData.teachRecords) ? appData.teachRecords : [];
+        appData.templates = Array.isArray(appData.templates) ? appData.templates : [];
+        appData.weekPlans = imported.weekPlans || {};
+        appData.blackBook = imported.blackBook || {};
+      }
+      saveData(); document.getElementById('modalImport').classList.remove('open'); renderOverview(); renderTodos(); renderTeachRecords(); renderWeekPlan(); renderBlackBook(); showToast('导入成功');
+    });
+
+    // ===================== 11. 主题切换 UI =====================
+    const themeModal = document.getElementById('modalTheme');
+    document.getElementById('themeToggleBtn').addEventListener('click', () => themeModal.classList.add('open'));
+    document.getElementById('closeThemeModal').addEventListener('click', () => themeModal.classList.remove('open'));
+    themeModal.querySelectorAll('[data-theme-val]').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const val = this.dataset.themeVal;
+        applyTheme(val);
+        themeModal.classList.remove('open');
+        showToast('主题已切换');
+      });
+    });
+
+    // ===================== 12. PWA 安装 =====================
+    let deferredPrompt = null;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      const btn = document.getElementById('pwaInstallBtn');
+      if (btn) btn.style.display = 'block';
+    });
+    document.getElementById('pwaInstallBtn').addEventListener('click', async function() {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      deferredPrompt = null;
+      this.style.display = 'none';
+      if (outcome === 'accepted') showToast('安装成功！');
+    });
+
+    // ===================== 13. Splash 时序 + 初始化 =====================
+    async function runSplash() {
+      const bar = document.getElementById('splashProgressBar');
+      const MAX_TIME = 2500;
+      const start = Date.now();
+      function tick() {
+        const spent = Date.now() - start;
+        const pct = Math.min(92, (spent / MAX_TIME) * 100);
+        bar.style.width = pct + '%';
+        if (spent >= MAX_TIME) {
+          bar.style.width = '100%';
+          hideSplash();
+          return;
+        }
+        if (!splashDone) requestAnimationFrame(tick);
+      }
+      tick();
+
+      // 加载数据
+      appData = await robustLoadData();
+      // 应用主题和动画
+      loadTheme();
+      loadAnim();
+      // 渲染所有模块
+      renderOverview();
+      renderTodos();
+      renderTeachRecords();
+      renderWeekPlan();
+      renderBlackBook();
+      renderLastWeek();
+      renderTemplateSelect();
+      updateSuggestions();
+      // 同步隐藏开关
+      const hideCb = document.getElementById('toggleHideDone');
+      if (hideCb) hideCb.classList.toggle('on', !!appData.meta.hideDoneTodo);
+      // 注册 SW
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js')
+          .then(() => console.log('SW registered'))
+          .catch(() => console.warn('SW register failed'));
+        navigator.serviceWorker.addEventListener('message', (e) => {
+          if (e.data && e.data.type === 'SW_UPDATED') {
+            showToast('检测到新版本，请刷新页面');
+          }
+        });
+      }
+      // 结束 Splash
+      bar.style.width = '100%';
+      hideSplash();
+      console.log('小乐教师工作台 豪华完整版 已启动');
+    }
+
+    let splashDone = false;
+    function hideSplash() {
+      if (splashDone) return;
+      splashDone = true;
+      const el = document.getElementById('splashScreen');
+      el.classList.add('fadeout');
+      setTimeout(() => el.style.display = 'none', 400);
+    }
+
+    // 保存数据（包装）
+    async function saveData() {
+      await robustSaveData(appData);
+    }
+
+    // 暴露全局
+    window.switchPage = switchPage;
+    window.manualBackup = manualBackup;
+    window.setTheme = applyTheme;
+    window.toggleAnimations = toggleAnimations;
+    window.triggerPwaInstall = async () => { if (deferredPrompt) { deferredPrompt.prompt(); } };
+
+    // 启动
+    runSplash();
+  </script>
+</body>
+</html>
