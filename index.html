@@ -207,71 +207,27 @@
     .search-item .title { font-weight: 500; font-size: 0.8rem; color: var(--color-text-secondary); }
     .search-item .text { font-size: 1rem; }
     .highlight { background: #ffd54f; color: #000; padding: 0 2px; border-radius: 2px; }
-    /* 统计卡片 + 环形 */
+    /* 统计卡片（第一版风格） */
     .stats-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
     .stat-card { text-align: center; padding: 16px 12px; }
-    .stat-ring {
-      position: relative;
-      display: inline-block;
-      width: 100px;
-      height: 100px;
-    }
-    .stat-ring svg {
-      width: 100px;
-      height: 100px;
-      transform: rotate(-90deg);
-    }
-    .ring-bg {
-      fill: none;
-      stroke: var(--color-border);
-      stroke-width: 8;
-    }
-    .ring-fg {
-      fill: none;
-      stroke: var(--color-accent);
-      stroke-width: 8;
-      stroke-linecap: round;
-      stroke-dasharray: 314.16;
-      stroke-dashoffset: 314.16;
-      transition: stroke-dashoffset 0.8s ease;
-    }
-    .stat-card .stat-val {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      font-size: 1.4rem;
-      font-weight: 700;
-      color: var(--color-accent);
-      margin: 0;
-    }
+    .stat-val { font-size: 2rem; font-weight: 700; color: var(--color-accent); margin: 4px 0; }
     .stat-label { font-size: 0.85rem; color: var(--color-text-secondary); }
-    /* 时间线 */
-    .timeline-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 10px 0;
+    /* 最近动态列表（简洁版） */
+    .preview-list { margin-top: 12px; }
+    .preview-item {
+      display: flex; justify-content: space-between; padding: 8px 0;
       border-bottom: 1px solid var(--color-border);
-      cursor: pointer;
-      transition: background 0.1s;
+      font-size: 0.9rem;
     }
-    .timeline-item:last-child { border-bottom: none; }
-    .timeline-item:active { background: var(--color-accent-light); }
-    .timeline-item .badge {
-      font-size: 0.7rem;
-      padding: 2px 10px;
-      border-radius: 30px;
+    .preview-item:last-child { border-bottom: none; }
+    .preview-item .tag {
       background: var(--color-accent-light);
       color: var(--color-accent);
-      white-space: nowrap;
-      flex-shrink: 0;
-    }
-    .timeline-item .content { flex: 1; word-break: break-word; }
-    .timeline-item .time {
+      border-radius: 30px;
+      padding: 0 10px;
       font-size: 0.7rem;
-      color: var(--color-text-secondary);
-      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
     }
     /* 杂碎 */
     .todo-item {
@@ -289,7 +245,26 @@
     .todo-pin { cursor: pointer; color: var(--color-text-secondary); transition: color 0.2s, transform 0.2s; }
     .todo-pin.pinned { color: var(--color-accent); transform: rotate(45deg); }
     .todo-time { font-size: 0.7rem; color: var(--color-text-secondary); white-space: nowrap; }
-    .btn-del { color: #e74c3c; background: transparent; border: none; font-size: 1.1rem; min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center; }
+    /* 美化删除按钮 */
+    .btn-del-todo {
+      background: transparent;
+      border: none;
+      color: var(--color-text-secondary);
+      font-size: 1.2rem;
+      min-width: 44px;
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 30px;
+      transition: background 0.2s, color 0.2s;
+      cursor: pointer;
+    }
+    .btn-del-todo:hover,
+    .btn-del-todo:active {
+      color: #e74c3c;
+      background: rgba(231, 76, 60, 0.1);
+    }
     .todo-delete-slide {
       position: absolute; right: 0; top: 0; bottom: 0; width: 86px;
       background: #dc3545; color: #fff; display: flex; align-items: center; justify-content: center;
@@ -464,17 +439,11 @@
 
   <!-- 主内容 -->
   <div class="container" id="mainContent">
-    <!-- 总览（新设计） -->
+    <!-- 总览（第一版风格） -->
     <div id="page-overview" class="page active">
       <div class="stats-row">
         <div class="card stat-card">
-          <div class="stat-ring">
-            <svg viewBox="0 0 120 120">
-              <circle class="ring-bg" cx="60" cy="60" r="50"/>
-              <circle class="ring-fg" cx="60" cy="60" r="50" id="ringTodo"/>
-            </svg>
-            <div class="stat-val" id="stat-todo-rate">0%</div>
-          </div>
+          <div class="stat-val" id="stat-todo-rate">0%</div>
           <div class="stat-label"><i class="fas fa-check-circle"></i> 杂碎完成率</div>
         </div>
         <div class="card stat-card">
@@ -491,13 +460,13 @@
         </div>
       </div>
 
-      <!-- 最近动态时间线 -->
+      <!-- 最近动态（简洁列表） -->
       <div class="card">
         <h3 style="margin-bottom:12px;"><i class="fas fa-clock"></i> 最近动态</h3>
-        <div id="overviewTimeline"></div>
+        <div id="overviewPreview"></div>
       </div>
 
-      <!-- 快捷操作 -->
+      <!-- 快捷操作（保留） -->
       <div class="card">
         <h3 style="margin-bottom:10px;"><i class="fas fa-bolt"></i> 快捷操作</h3>
         <div class="btn-group" style="gap:10px;">
@@ -638,7 +607,7 @@
   </button>
 
   <script>
-    // ===================== 1. 数据层（IndexedDB 优先 + localStorage 降级） =====================
+    // ===================== 数据层（IndexedDB 优先 + localStorage 降级） =====================
     const DB_NAME = "xiaole_teacher_db";
     const DB_STORE = "app_data";
     const BACKUP_KEY = "xiaole_app_backup";
@@ -824,7 +793,7 @@
       });
     }
 
-    // ===================== 2. 主题 & 动画 =====================
+    // ===================== 主题 & 动画 =====================
     function applyTheme(name) {
       document.documentElement.setAttribute('data-theme', name);
       appData.meta.theme = name;
@@ -838,9 +807,9 @@
     function loadTheme() { applyTheme(appData.meta.theme || 'sunny'); }
     function loadAnim() { toggleAnimations(appData.meta.animations !== false); }
 
-    // ===================== 3. 总览页 =====================
+    // ===================== 总览（第一版风格） =====================
     function renderOverview() {
-      // 统计
+      // 统计数字
       const todos = appData.todos;
       const total = todos.length;
       const done = todos.filter(t => t.done).length;
@@ -861,81 +830,35 @@
       const weeks = Object.keys(appData.blackBook).filter(k => (appData.blackBook[k]?.items||[]).length > 0);
       document.getElementById('stat-black-weeks').textContent = weeks.length;
 
-      // 环形进度
-      const ring = document.getElementById('ringTodo');
-      if (ring) {
-        const circumference = 314.16;
-        const offset = circumference - (rate / 100) * circumference;
-        ring.style.strokeDashoffset = offset;
-      }
-
-      // 时间线
-      const timeline = document.getElementById('overviewTimeline');
+      // 最近动态列表（混合展示最新5条）
+      const preview = document.getElementById('overviewPreview');
       const items = [];
       appData.todos.forEach(t => {
-        items.push({ type: '杂碎', text: t.content, time: t.createdAt, id: t.id, module: 'todo', done: t.done });
+        items.push({ type: '杂碎', text: t.content, time: t.createdAt, done: t.done });
       });
       appData.teachRecords.forEach(r => {
-        items.push({ type: '教学', text: r.content, time: r.createdAt, id: r.id, module: 'teach' });
-      });
-      Object.entries(appData.weekPlans).forEach(([wk, plan]) => {
-        ['main','web','finance','life'].forEach(sec => {
-          (plan.sections?.[sec] || []).forEach(t => {
-            items.push({ type: '周计划', text: t.text, time: t.createdAt || Date.now(), id: t.id, module: 'weekplan', week: wk });
-          });
-        });
-      });
-      Object.entries(appData.blackBook).forEach(([wk, bb]) => {
-        (bb.items || []).forEach(it => {
-          items.push({ type: '黑本', text: it.text, time: it.createdAt || Date.now(), id: it.id, module: 'blackbook', week: wk });
-        });
+        items.push({ type: '教学', text: r.content, time: r.createdAt });
       });
       items.sort((a,b) => b.time - a.time);
-      const recent = items.slice(0, 8);
+      const recent = items.slice(0, 5);
       if (recent.length === 0) {
-        timeline.innerHTML = `<div class="empty-tip" style="padding:12px 0;"><span class="illustration" style="width:40px;height:40px;line-height:40px;font-size:1.5rem;">📭</span><div class="desc" style="font-size:0.9rem;">暂无动态，开始记录吧</div></div>`;
+        preview.innerHTML = `<div class="empty-tip" style="padding:12px 0;"><span class="illustration" style="width:40px;height:40px;line-height:40px;font-size:1.5rem;">📭</span><div class="desc" style="font-size:0.9rem;">暂无动态，开始记录吧</div></div>`;
         return;
       }
       let html = '';
       recent.forEach(item => {
-        const timeStr = new Date(item.time).toLocaleString('zh-CN', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
+        const doneIcon = item.done ? '✅' : '⬜';
         html += `
-          <div class="timeline-item" data-module="${item.module}" data-id="${item.id}" data-week="${item.week || ''}">
-            <span class="badge">${item.type}</span>
-            <span class="content">${escapeHtml(item.text)}</span>
-            <span class="time">${timeStr}</span>
+          <div class="preview-item">
+            <span>${doneIcon} ${escapeHtml(item.text)}</span>
+            <span class="tag">${item.type}</span>
           </div>
         `;
       });
-      timeline.innerHTML = html;
-      timeline.querySelectorAll('.timeline-item').forEach(el => {
-        el.addEventListener('click', function() {
-          const module = this.dataset.module;
-          const id = this.dataset.id;
-          const week = this.dataset.week;
-          switchPage(module === 'todo' ? 'todo' :
-                     module === 'teach' ? 'teach' :
-                     module === 'weekplan' ? 'weekplan' : 'blackbook');
-          if (module === 'weekplan' && week) {
-            document.getElementById('weekPicker').value = week;
-            setTimeout(() => renderWeekPlan(), 50);
-          }
-          if (module === 'blackbook' && week) {
-            document.getElementById('bbWeekPicker').value = week;
-            setTimeout(() => { renderBlackBook(); renderLastWeek(); }, 50);
-          }
-          setTimeout(() => {
-            const selector = module === 'todo' ? `.todo-item[data-id="${id}"]` :
-                             module === 'teach' ? `.record-card[data-id="${id}"]` :
-                             module === 'weekplan' ? `.task-item[data-id="${id}"]` :
-                             `.bb-item[data-id="${id}"]`;
-            scrollToItem(selector);
-          }, 150);
-        });
-      });
+      preview.innerHTML = html;
     }
 
-    // ===================== 4. 导航 & 搜索 =====================
+    // ===================== 导航 & 搜索 =====================
     const pages = document.querySelectorAll('.page');
     const tabs = document.querySelectorAll('.nav-tab');
     let currentPage = 'overview';
@@ -1022,9 +945,7 @@
       }, 80);
     }
 
-    // ===================== 5. 统计（已被renderOverview包含） =====================
-
-    // ===================== 6. 杂碎 =====================
+    // ===================== 杂碎 =====================
     const todoInput = document.getElementById('todoInput');
     const todoListWrap = document.getElementById('todoListWrap');
     const toggleHideDone = document.getElementById('toggleHideDone');
@@ -1051,7 +972,7 @@
             <span class="todo-pin ${pinCls}" data-id="${item.id}"><i class="fas fa-thumbtack"></i></span>
             <span class="todo-text">${escapeHtml(item.content)}</span>
             <span class="todo-time">${time}</span>
-            <button class="btn-del" data-id="${item.id}" aria-label="删除"><i class="fas fa-trash-alt"></i></button>
+            <button class="btn-del-todo" data-id="${item.id}" aria-label="删除"><i class="fas fa-trash-alt"></i></button>
           </div>
         </div>`;
       });
@@ -1069,7 +990,7 @@
           if (item) { item.pinned = !item.pinned; saveData(); renderTodos(); }
         });
       });
-      todoListWrap.querySelectorAll('.btn-del').forEach(btn => {
+      todoListWrap.querySelectorAll('.btn-del-todo').forEach(btn => {
         btn.addEventListener('click', function(e) {
           e.stopPropagation();
           const id = this.dataset.id;
@@ -1149,7 +1070,7 @@
     todoInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addTodo(); } });
     document.getElementById('todoAddBtn').addEventListener('click', addTodo);
 
-    // ===================== 7. 教学 =====================
+    // ===================== 教学 =====================
     const teachDate = document.getElementById('teachDate');
     const teachClass = document.getElementById('teachClass');
     const teachSubject = document.getElementById('teachSubject');
@@ -1295,7 +1216,7 @@
       });
     }
 
-    // ===================== 8. 周计划 =====================
+    // ===================== 周计划 =====================
     const weekPicker = document.getElementById('weekPicker');
     const planWrap = document.getElementById('planWrap');
     const templateSelect = document.getElementById('templateSelect');
@@ -1412,7 +1333,7 @@
       saveData(); renderWeekPlan(); renderOverview(); showToast('未完成任务已复制到下周');
     });
 
-    // ===================== 9. 黑本 =====================
+    // ===================== 黑本 =====================
     const bbWeekPicker = document.getElementById('bbWeekPicker');
     const bbInput = document.getElementById('bbInput');
     const btnAddBb = document.getElementById('btnAddBb');
@@ -1508,7 +1429,7 @@
       lastWeekBbWrap.innerHTML = html;
     }
 
-    // ===================== 10. 导入导出 =====================
+    // ===================== 导入导出 =====================
     document.getElementById('btnExport').addEventListener('click', () => document.getElementById('modalExport').classList.add('open'));
     document.getElementById('closeExportModal').addEventListener('click', () => document.getElementById('modalExport').classList.remove('open'));
     document.getElementById('expAll').addEventListener('click', function() { document.getElementById('modalExport').classList.remove('open'); exportData('all'); });
@@ -1577,7 +1498,7 @@
       saveData(); document.getElementById('modalImport').classList.remove('open'); renderOverview(); renderTodos(); renderTeachRecords(); renderWeekPlan(); renderBlackBook(); showToast('导入成功');
     });
 
-    // ===================== 11. 主题切换 UI =====================
+    // ===================== 主题切换 UI =====================
     const themeModal = document.getElementById('modalTheme');
     document.getElementById('themeToggleBtn').addEventListener('click', () => themeModal.classList.add('open'));
     document.getElementById('closeThemeModal').addEventListener('click', () => themeModal.classList.remove('open'));
@@ -1590,7 +1511,7 @@
       });
     });
 
-    // ===================== 12. PWA 安装 =====================
+    // ===================== PWA 安装 =====================
     let deferredPrompt = null;
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
@@ -1607,7 +1528,7 @@
       if (outcome === 'accepted') showToast('安装成功！');
     });
 
-    // ===================== 13. Splash 时序 + 初始化 =====================
+    // ===================== Splash 时序 + 初始化 =====================
     async function runSplash() {
       const bar = document.getElementById('splashProgressBar');
       const MAX_TIME = 2500;
@@ -1656,7 +1577,7 @@
       // 结束 Splash
       bar.style.width = '100%';
       hideSplash();
-      console.log('小乐教师工作台 豪华完整版 已启动');
+      console.log('小乐教师工作台 完整版 已启动');
     }
 
     let splashDone = false;
@@ -1668,7 +1589,6 @@
       setTimeout(() => el.style.display = 'none', 400);
     }
 
-    // 保存数据（包装）
     async function saveData() {
       await robustSaveData(appData);
     }
