@@ -1,21 +1,26 @@
 {
-  "name": "小乐教师工作台",
-  "short_name": "小乐教师",
-  "start_url": "./",
+  "name": "个人记录中心",
+  "short_name": "记录中心",
+  "description": "个人成长记录中心 - 任务、教学、生活、学习、创业、财务一站式记录",
+  "start_url": "./index.html",
   "display": "standalone",
+  "orientation": "portrait-primary",
   "background_color": "#f7f5f0",
-  "theme_color": "#2563eb",
+  "theme_color": "#e67e22",
   "icons": [
     {
-      "src": "./icon-192.png",
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='42' fill='%23e67e22'/%3E%3Ctext x='96' y='130' font-size='100' text-anchor='middle' fill='white' font-family='sans-serif'%3E%F0%9F%93%96%3C/text%3E%3C/svg%3E",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
     },
     {
-      "src": "./icon-512.png",
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='112' fill='%23e67e22'/%3E%3Ctext x='256' y='340' font-size='260' text-anchor='middle' fill='white' font-family='sans-serif'%3E%F0%9F%93%96%3C/text%3E%3C/svg%3E",
       "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable any"
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
     }
-  ]
+  ],
+  "categories": ["productivity", "utilities", "education"],
+  "lang": "zh-CN"
 }
