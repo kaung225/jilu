@@ -444,8 +444,10 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
     <div class="sub-tabs" id="financeSubTabs">
       <div class="sub-tab active" data-sub="overview">概览</div>
       <div class="sub-tab" data-sub="accounts">账户</div>
+      <div class="sub-tab" data-sub="transfer">转账</div>
       <div class="sub-tab" data-sub="budget">预算</div>
-      <div class="sub-tab" data-sub="debt">债务</div>
+      <div class="sub-tab" data-sub="debt">借贷</div>
+      <div class="sub-tab" data-sub="stats">统计</div>
       <div class="sub-tab" data-sub="records">明细</div>
     </div>
     <div id="financeContent"></div>
@@ -650,7 +652,7 @@ let state = {
   data: { settings:{nickname:'',avatar:'😊',theme:'sunny',darkMode:'auto',fontSize:'medium',syncEnabled:true},
     tasks:[], classes:[], students:[], teaching:[], attendance:[],
     life:[], study:[], studySubjects:[], projects:[], milestones:[], updates:[],
-    finance:{accounts:[],categories:[],debts:[],budgets:[],records:[]} },
+    finance:{accounts:[],categories:[],debts:[],budgets:[],records:[],transfers:[]} },
   currentPage: 'dashboard',
   financeSub: 'overview',
   filters: { tasks:'all', teaching:'all', life:'all', study:'all' },
@@ -691,7 +693,7 @@ function showAuthStatus(msg, type){
 
 // ===================== 本地存储 =====================
 function saveLocal(){ try{ localStorage.setItem(LOCAL_KEY, JSON.stringify(state.data)); }catch(e){ showToast('本地保存失败'); } }
-function loadLocal(){ try{ const r=localStorage.getItem(LOCAL_KEY); if(r){ const d=JSON.parse(r); state.data=Object.assign(state.data,d); if(!state.data.finance) state.data.finance={accounts:[],categories:[],debts:[],budgets:[],records:[]}; return true; } }catch(e){} return false; }
+function loadLocal(){ try{ const r=localStorage.getItem(LOCAL_KEY); if(r){ const d=JSON.parse(r); state.data=Object.assign(state.data,d); if(!state.data.finance) state.data.finance={accounts:[],categories:[],debts:[],budgets:[],records:[],transfers:[]}; if(!state.data.finance.transfers) state.data.finance.transfers=[]; return true; } }catch(e){} return false; }
 
 // ===================== 云端同步 =====================
 async function syncToCloud(){
@@ -707,7 +709,7 @@ async function syncToCloud(){
       ['projects', state.data.projects], ['project_milestones', state.data.milestones], ['project_updates', state.data.updates],
       ['finance_accounts', state.data.finance.accounts], ['finance_categories', state.data.finance.categories],
       ['finance_debts', state.data.finance.debts], ['finance_budgets', state.data.finance.budgets],
-      ['finance_records', state.data.finance.records]
+      ['finance_records', state.data.finance.records], ['finance_transfers', state.data.finance.transfers||[]]
     ];
     for(const [table, rows] of tables){
       if(rows && rows.length>0){
@@ -724,7 +726,7 @@ async function syncFromCloud(){
   setSyncStatus('syncing');
   const uid_ = state.user.id;
   try{
-    const map = {tasks:'tasks',classes:'classes',students:'students',teaching_records:'teaching',attendance:'attendance',life_records:'life',study_records:'study',study_subjects:'studySubjects',projects:'projects',project_milestones:'milestones',project_updates:'updates',finance_accounts:'financeAccounts',finance_categories:'financeCategories',finance_debts:'financeDebts',finance_budgets:'financeBudgets',finance_records:'financeRecords'};
+    const map = {tasks:'tasks',classes:'classes',students:'students',teaching_records:'teaching',attendance:'attendance',life_records:'life',study_records:'study',study_subjects:'studySubjects',projects:'projects',project_milestones:'milestones',project_updates:'updates',finance_accounts:'financeAccounts',finance_categories:'financeCategories',finance_debts:'financeDebts',finance_budgets:'financeBudgets',finance_records:'financeRecords',finance_transfers:'financeTransfers'};
     for(const [table, key] of Object.entries(map)){
       const {data,error} = await supabase.from(table).eq('user_id', uid_);
       if(!error && data){
@@ -1111,7 +1113,9 @@ function openTeachingEdit(id, tpl){
   const classOpts=state.data.classes.map(c=>`<option value="${c.id}" ${c.id===r.class_id?'selected':''}>${esc(c.name)}</option>`).join('');
   const students=state.data.students.filter(s=>s.class_id===r.class_id);
   const absentMap={};
-  state.data.attendance.filter(a=>a.teaching_record_id===id).forEach(a=>{absentMap[a.student_id]=a;});
+  const attDetails={};
+  let currentAttSid=null;
+  state.data.attendance.filter(a=>a.teaching_record_id===id).forEach(a=>{absentMap[a.student_id]=a; attDetails[a.student_id]={reason:a.reason||'',leave_type:a.leave_type||'',arrival_time:a.arrival_time||'',late_reason:a.late_reason||''};});
   $('#drawerTitle').textContent=isNew?'新建教学记录':'编辑教学记录';
   $('#drawerBody').innerHTML=`
     <div class="form-row"><label>日期</label><input type="date" id="teDate" value="${r.date}" /></div>
@@ -1151,13 +1155,15 @@ function openTeachingEdit(id, tpl){
       this.classList.toggle('absent', next==='absent');
       this.textContent=this.textContent.replace(' ⏰','')+(next==='late'?' ⏰':'');
       if(next!=='present'){
+        if(currentAttSid){ attDetails[currentAttSid]={reason:$('#teAbsReason').value,leave_type:$('#teLeaveType').value,arrival_time:$('#teArrival').value,late_reason:$('#teLateReason').value}; }
+        currentAttSid=this.dataset.sid;
         $('#teAttDetail').style.display='block';
-        const rec=absentMap[this.dataset.sid]||{};
+        const rec=attDetails[this.dataset.sid]||absentMap[this.dataset.sid]||{};
         $('#teAbsReason').value=rec.reason||'';
         $('#teLeaveType').value=rec.leave_type||'';
         $('#teArrival').value=rec.arrival_time||'';
         $('#teLateReason').value=rec.late_reason||'';
-      } else { $('#teAttDetail').style.display='none'; }
+      } else { if(currentAttSid){ attDetails[currentAttSid]={reason:$('#teAbsReason').value,leave_type:$('#teLeaveType').value,arrival_time:$('#teArrival').value,late_reason:$('#teLateReason').value}; } currentAttSid=null; $('#teAttDetail').style.display='none'; }
     });
   }
   bindAttChips();
@@ -1169,10 +1175,12 @@ function openTeachingEdit(id, tpl){
     else Object.assign(r,data,{updatedAt:Date.now()});
     const recId=isNew?data.id:id;
     state.data.attendance=state.data.attendance.filter(a=>a.teaching_record_id!==recId);
+    if(currentAttSid){ attDetails[currentAttSid]={reason:$('#teAbsReason').value,leave_type:$('#teLeaveType').value,arrival_time:$('#teArrival').value,late_reason:$('#teLateReason').value}; }
     $$('#teAbsentList .student-chip').forEach(el=>{
       const st=el.dataset.status;
       if(st!=='present'){
-        state.data.attendance.push({id:uid(),student_id:el.dataset.sid,class_id:cid,teaching_record_id:recId,date,status:st,reason:$('#teAbsReason').value,leave_type:$('#teLeaveType').value,arrival_time:$('#teArrival').value,late_reason:$('#teLateReason').value,createdAt:Date.now()});
+        const d=attDetails[el.dataset.sid]||{};
+        state.data.attendance.push({id:uid(),student_id:el.dataset.sid,class_id:cid,teaching_record_id:recId,date,status:st,reason:d.reason||'',leave_type:d.leave_type||'',arrival_time:d.arrival_time||'',late_reason:d.late_reason||'',createdAt:Date.now()});
       }
     });
     saveLocal(); scheduleSync(); closeDrawer(); renderTeaching(); renderDashboard(); showToast('已保存');
@@ -1425,12 +1433,15 @@ function initFinanceDefaults(){
 }
 function renderFinance(){
   initFinanceDefaults();
+  if(!state.data.finance.transfers) state.data.finance.transfers=[];
   const sub=state.financeSub;
   const wrap=$('#financeContent');
   if(sub==='overview') renderFinanceOverview(wrap);
   else if(sub==='accounts') renderFinanceAccounts(wrap);
+  else if(sub==='transfer') renderFinanceTransfer(wrap);
   else if(sub==='budget') renderFinanceBudget(wrap);
   else if(sub==='debt') renderFinanceDebt(wrap);
+  else if(sub==='stats') renderFinanceStats(wrap);
   else if(sub==='records') renderFinanceRecords(wrap);
 }
 function renderFinanceOverview(wrap){
@@ -1439,7 +1450,8 @@ function renderFinanceOverview(wrap){
   const expense=state.data.finance.records.filter(f=>f.record_type==='expense'&&f.date.startsWith(month)).reduce((a,b)=>a+Number(b.amount),0);
   const saving=state.data.finance.records.filter(f=>f.record_type==='saving'&&f.date.startsWith(month)).reduce((a,b)=>a+Number(b.amount),0);
   const totalAssets=state.data.finance.accounts.reduce((a,b)=>a+Number(b.balance),0);
-  const totalDebt=state.data.finance.debts.filter(d=>d.status==='active').reduce((a,b)=>a+(Number(b.total_amount)-Number(b.paid_amount)),0);
+  const totalDebt=state.data.finance.debts.filter(d=>d.debt_type!=='lend'&&d.status==='active').reduce((a,b)=>a+(Number(b.total_amount)-Number(b.paid_amount)),0);
+  const totalLend=state.data.finance.debts.filter(d=>d.debt_type==='lend'&&d.status==='active').reduce((a,b)=>a+(Number(b.total_amount)-Number(b.paid_amount)),0);
   let html=`
     <div class="kpi-row">
       <div class="card kpi-card"><div class="kpi-val">${fmtMoney(income)}</div><div class="kpi-label">本月收入</div></div>
@@ -1448,8 +1460,8 @@ function renderFinanceOverview(wrap){
     </div>
     <div class="kpi-row">
       <div class="card kpi-card"><div class="kpi-val">${fmtMoney(totalAssets)}</div><div class="kpi-label">总资产</div></div>
-      <div class="card kpi-card"><div class="kpi-val">${fmtMoney(totalDebt)}</div><div class="kpi-label">未还债务</div></div>
-      <div class="card kpi-card"><div class="kpi-val">${fmtMoney(saving)}</div><div class="kpi-label">本月存款</div></div>
+      <div class="card kpi-card"><div class="kpi-val" style="color:var(--danger)">${fmtMoney(totalDebt)}</div><div class="kpi-label">待还债务</div></div>
+      <div class="card kpi-card"><div class="kpi-val" style="color:var(--success)">${fmtMoney(totalLend)}</div><div class="kpi-label">待收债权</div></div>
     </div>
     <div class="card"><div style="font-weight:600;margin-bottom:8px">近6个月收支</div><div class="bar-chart" id="financeChart"></div></div>
     <div class="card"><div style="font-weight:600;margin-bottom:8px">支出分类</div><div class="donut-wrap" id="financeDonut"></div></div>
@@ -1525,53 +1537,227 @@ async function addBudget(){
   saveLocal(); scheduleSync(); renderFinance(); showToast('预算已设置');
 }
 function renderFinanceDebt(wrap){
-  let html='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><b>债务管理</b><button class="primary" style="min-height:36px;padding:0 14px;font-size:.85rem" onclick="addDebt()"><i class="fas fa-plus"></i> 新增债务</button></div>';
+  let html='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><b>借贷管理</b><button class="primary" style="min-height:36px;padding:0 14px;font-size:.85rem" onclick="openDebtEdit()"><i class="fas fa-plus"></i> 记一笔</button></div>';
   const debts=state.data.finance.debts;
-  if(debts.length===0){ html+='<div class="empty"><p>暂无债务记录</p></div>'; }
+  if(debts.length===0){ html+='<div class="empty"><p>暂无借贷记录</p></div>'; }
   else{
-    debts.forEach(d=>{
-      const remaining=Number(d.total_amount)-Number(d.paid_amount);
-      const pct=d.total_amount>0?(d.paid_amount/d.total_amount*100):0;
-      html+=`<div class="debt-card">
-        <div class="debt-header"><span class="debt-name">${esc(d.name)}</span><span class="debt-amount">${fmtMoney(remaining)}</span></div>
-        <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:var(--success)"></div></div>
-        <div style="font-size:.78rem;color:var(--text2);margin-top:4px">已还 ${fmtMoney(d.paid_amount)} / ${fmtMoney(d.total_amount)} (${Math.round(pct)}%)${d.due_date?' · 到期：'+fmtDate(d.due_date):''}</div>
-        <div style="display:flex;gap:8px;margin-top:8px">
-          <button style="min-height:32px;padding:0 12px;font-size:.8rem" onclick="repayDebt('${d.id}')"><i class="fas fa-hand-holding-usd"></i> 还债</button>
-          <button class="danger" style="min-height:32px;padding:0 12px;font-size:.8rem" onclick="delDebt('${d.id}')"><i class="fas fa-trash"></i> 删除</button>
-        </div>
+    const borrows=debts.filter(d=>d.debt_type!=='lend');
+    const lends=debts.filter(d=>d.debt_type==='lend');
+    if(borrows.length>0){
+      html+='<div style="font-weight:600;margin:8px 0;color:var(--danger)"><i class="fas fa-arrow-down"></i> 借入（我欠别人）</div>';
+      borrows.forEach(d=>{
+        const remaining=Number(d.total_amount)-Number(d.paid_amount);
+        const pct=d.total_amount>0?(d.paid_amount/d.total_amount*100):0;
+        html+=`<div class="debt-card" style="border-left:3px solid var(--danger)">
+          <div class="debt-header"><span class="debt-name">${esc(d.person_name||d.name)} <span style="font-size:.7rem;color:var(--text2)">${esc(d.name)}</span></span><span class="debt-amount" style="color:var(--danger)">待还 ${fmtMoney(remaining)}</span></div>
+          <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:var(--danger)"></div></div>
+          <div style="font-size:.78rem;color:var(--text2);margin-top:4px">已还 ${fmtMoney(d.paid_amount)} / ${fmtMoney(d.total_amount)} (${Math.round(pct)}%)${d.interest_rate?` · 年利率${d.interest_rate}%`:''}${d.due_date?' · 到期：'+fmtDate(d.due_date):''}</div>
+          <div style="display:flex;gap:8px;margin-top:8px">
+            <button style="min-height:32px;padding:0 12px;font-size:.8rem" onclick="repayDebt('${d.id}')"><i class="fas fa-hand-holding-usd"></i> 还债</button>
+            <button class="danger" style="min-height:32px;padding:0 12px;font-size:.8rem" onclick="delDebt('${d.id}')"><i class="fas fa-trash"></i> 删除</button>
+          </div>
+        </div>`;
+      });
+    }
+    if(lends.length>0){
+      html+='<div style="font-weight:600;margin:12px 0 8px;color:var(--success)"><i class="fas fa-arrow-up"></i> 借出（别人欠我）</div>';
+      lends.forEach(d=>{
+        const remaining=Number(d.total_amount)-Number(d.paid_amount);
+        const pct=d.total_amount>0?(d.paid_amount/d.total_amount*100):0;
+        html+=`<div class="debt-card" style="border-left:3px solid var(--success)">
+          <div class="debt-header"><span class="debt-name">${esc(d.person_name||d.name)} <span style="font-size:.7rem;color:var(--text2)">${esc(d.name)}</span></span><span class="debt-amount" style="color:var(--success)">待收 ${fmtMoney(remaining)}</span></div>
+          <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:var(--success)"></div></div>
+          <div style="font-size:.78rem;color:var(--text2);margin-top:4px">已收 ${fmtMoney(d.paid_amount)} / ${fmtMoney(d.total_amount)} (${Math.round(pct)}%)${d.interest_rate?` · 年利率${d.interest_rate}%`:''}${d.due_date?' · 到期：'+fmtDate(d.due_date):''}</div>
+          <div style="display:flex;gap:8px;margin-top:8px">
+            <button style="min-height:32px;padding:0 12px;font-size:.8rem" onclick="repayDebt('${d.id}')"><i class="fas fa-hand-holding-usd"></i> 收款</button>
+            <button class="danger" style="min-height:32px;padding:0 12px;font-size:.8rem" onclick="delDebt('${d.id}')"><i class="fas fa-trash"></i> 删除</button>
+          </div>
+        </div>`;
+      });
+    }
+  }
+  wrap.innerHTML=html;
+}
+function openDebtEdit(){
+  const accOpts=state.data.finance.accounts.map(a=>`<option value="${a.id}">${esc(a.name)}</option>`).join('');
+  $('#drawerTitle').textContent='记一笔借贷';
+  $('#drawerBody').innerHTML=`
+    <div class="form-row"><label>类型</label><div style="display:flex;gap:8px"><button class="primary" id="debtTypeBorrow" style="flex:1" onclick="setDebtType('borrow')">借入（我欠别人）</button><button id="debtTypeLend" style="flex:1" onclick="setDebtType('lend')">借出（别人欠我）</button></div></div>
+    <div class="form-row"><label>对方姓名</label><input id="debtPerson" placeholder="如：张三、银行" /></div>
+    <div class="form-row"><label>备注/名称</label><input id="debtName" placeholder="如：房贷、应急借款" /></div>
+    <div class="form-row-inline"><div class="form-row"><label>金额</label><input type="number" id="debtAmount" value="0" step="0.01" min="0" /></div>
+    <div class="form-row"><label>年利率%</label><input type="number" id="debtRate" value="0" step="0.1" min="0" /></div></div>
+    <div class="form-row-inline"><div class="form-row"><label>借款日期</label><input type="date" id="debtBorrowDate" value="${todayStr()}" /></div>
+    <div class="form-row"><label>到期日期</label><input type="date" id="debtDueDate" /></div></div>
+    <div class="form-row"><label id="debtAccLabel">到账账户</label><select id="debtAccount"><option value="">不关联账户</option>${accOpts}</select></div>
+    <div class="form-row"><label>备注</label><input id="debtNote" /></div>
+    <div class="modal-actions"><button class="primary" id="debtSaveBtn"><i class="fas fa-save"></i> 保存</button></div>`;
+  window._debtType='borrow';
+  openDrawer();
+  $('#debtSaveBtn').onclick=()=>{
+    const person=$('#debtPerson').value.trim();
+    if(!person){ showToast('请输入对方姓名'); return; }
+    const amount=+$('#debtAmount').value||0;
+    if(amount<=0){ showToast('请输入金额'); return; }
+    const accId=$('#debtAccount').value;
+    const acc=state.data.finance.accounts.find(a=>a.id===accId);
+    const debt={id:uid(),debt_type:window._debtType,person_name:person,name:$('#debtName').value.trim()||person,total_amount:amount,paid_amount:0,interest_rate:+$('#debtRate').value||0,borrow_date:$('#debtBorrowDate').value,due_date:$('#debtDueDate').value,note:$('#debtNote').value.trim(),status:'active',createdAt:Date.now()};
+    state.data.finance.debts.push(debt);
+    // 关联账户流水
+    if(acc){
+      if(window._debtType==='borrow'){
+        acc.balance=Number(acc.balance)+amount;
+        state.data.finance.records.unshift({id:uid(),date:debt.borrow_date,record_type:'income',category:'借入',category_name:'借入',amount,account_id:accId,note:'向'+person+'借入',payment_method:acc.name,createdAt:Date.now()});
+      }else{
+        acc.balance=Number(acc.balance)-amount;
+        state.data.finance.records.unshift({id:uid(),date:debt.borrow_date,record_type:'expense',category:'借出',category_name:'借出',amount,account_id:accId,note:'借给'+person,payment_method:acc.name,createdAt:Date.now()});
+      }
+    }
+    saveLocal(); scheduleSync(); closeDrawer(); renderFinance(); renderDashboard(); showToast('已记录');
+  };
+}
+window.setDebtType=function(t){
+  window._debtType=t;
+  $('#debtTypeBorrow').classList.toggle('primary', t==='borrow');
+  $('#debtTypeLend').classList.toggle('primary', t==='lend');
+  $('#debtAccLabel').textContent=t==='borrow'?'到账账户':'转出账户';
+};
+async function repayDebt(id){
+  const d=state.data.finance.debts.find(x=>x.id===id); if(!d)return;
+  const remaining=Number(d.total_amount)-Number(d.paid_amount);
+  const isLend=d.debt_type==='lend';
+  const accOpts=state.data.finance.accounts.map(a=>`<option value="${a.id}">${esc(a.name)}</option>`).join('');
+  $('#drawerTitle').textContent=isLend?'收款':'还债';
+  $('#drawerBody').innerHTML=`
+    <div style="margin-bottom:12px;padding:12px;background:var(--accent-light);border-radius:12px">
+      <div><b>${esc(d.person_name||d.name)}</b></div>
+      <div style="font-size:.85rem;color:var(--text2);margin-top:4px">${isLend?'待收':'待还'}：${fmtMoney(remaining)} / ${fmtMoney(d.total_amount)}</div>
+    </div>
+    <div class="form-row"><label>金额</label><input type="number" id="repayAmount" value="${remaining}" step="0.01" min="0" max="${remaining}" /></div>
+    <div class="form-row"><label>${isLend?'收款到账户':'从账户扣除'}</label><select id="repayAccount"><option value="">不关联账户</option>${accOpts}</select></div>
+    <div class="form-row"><label>日期</label><input type="date" id="repayDate" value="${todayStr()}" /></div>
+    <div class="form-row"><label>备注</label><input id="repayNote" /></div>
+    <div class="modal-actions"><button class="primary" id="repaySaveBtn"><i class="fas fa-check"></i> 确认${isLend?'收款':'还债'}</button></div>`;
+  openDrawer();
+  $('#repaySaveBtn').onclick=()=>{
+    const amount=+$('#repayAmount').value||0;
+    if(amount<=0){ showToast('请输入金额'); return; }
+    const accId=$('#repayAccount').value;
+    const acc=state.data.finance.accounts.find(a=>a.id===accId);
+    const date=$('#repayDate').value;
+    d.paid_amount=Number(d.paid_amount)+amount;
+    if(Number(d.paid_amount)>=Number(d.total_amount)) d.status='paid';
+    if(acc){
+      if(isLend){
+        acc.balance=Number(acc.balance)+amount;
+        state.data.finance.records.unshift({id:uid(),date,record_type:'income',category:'收款',category_name:'收款',amount,account_id:accId,debt_id:id,note:'收'+d.person_name+'还款',payment_method:acc.name,createdAt:Date.now()});
+      }else{
+        acc.balance=Number(acc.balance)-amount;
+        state.data.finance.records.unshift({id:uid(),date,record_type:'debt_repayment',category:'还债',category_name:'还债',amount,account_id:accId,debt_id:id,note:'还'+d.person_name,payment_method:acc.name,createdAt:Date.now()});
+      }
+    }
+    saveLocal(); scheduleSync(); closeDrawer(); renderFinance(); renderDashboard(); showToast((isLend?'收款':'还债')+'成功 '+fmtMoney(amount));
+  };
+}
+async function delDebt(id){ const ok=await showConfirm('删除借贷','确定删除此借贷记录？相关流水保留。'); if(!ok)return; state.data.finance.debts=state.data.finance.debts.filter(d=>d.id!==id); saveLocal(); scheduleSync(); renderFinance(); }
+
+// ===================== 转账 =====================
+function renderFinanceTransfer(wrap){
+  const accOpts=state.data.finance.accounts.map(a=>`<option value="${a.id}">${esc(a.name)} (${fmtMoney(a.balance)})</option>`).join('');
+  let html=`
+    <div class="card" style="margin-bottom:12px">
+      <div style="font-weight:600;margin-bottom:12px"><i class="fas fa-exchange-alt" style="color:var(--accent)"></i> 账户间转账</div>
+      <div class="form-row-inline"><div class="form-row"><label>转出账户</label><select id="tfFrom">${accOpts}</select></div>
+      <div class="form-row"><label>转入账户</label><select id="tfTo">${accOpts}</select></div></div>
+      <div class="form-row-inline"><div class="form-row"><label>金额</label><input type="number" id="tfAmount" value="0" step="0.01" min="0" /></div>
+      <div class="form-row"><label>手续费</label><input type="number" id="tfFee" value="0" step="0.01" min="0" /></div></div>
+      <div class="form-row-inline"><div class="form-row"><label>日期</label><input type="date" id="tfDate" value="${todayStr()}" /></div>
+      <div class="form-row"><label>备注</label><input id="tfNote" placeholder="可选" /></div></div>
+      <button class="primary" style="width:100%" id="tfSaveBtn"><i class="fas fa-exchange-alt"></i> 确认转账</button>
+    </div>
+    <div style="font-weight:600;margin-bottom:8px">转账记录</div>`;
+  const transfers=[...(state.data.finance.transfers||[])].sort((a,b)=>b.createdAt-a.createdAt);
+  if(transfers.length===0){ html+='<div class="empty"><p>暂无转账记录</p></div>'; }
+  else{
+    transfers.forEach(t=>{
+      const fromAcc=state.data.finance.accounts.find(a=>a.id===t.from_account_id);
+      const toAcc=state.data.finance.accounts.find(a=>a.id===t.to_account_id);
+      html+=`<div class="record-card" style="margin-bottom:8px">
+        <div class="r-title"><i class="fas fa-exchange-alt" style="color:var(--info)"></i> ${esc(fromAcc?.name||'未知')} → ${esc(toAcc?.name||'未知')} <span style="margin-left:auto;font-weight:700">${fmtMoney(t.amount)}</span></div>
+        <div class="r-meta"><span>${fmtDate(t.date)}</span>${t.fee>0?`<span>手续费 ${fmtMoney(t.fee)}</span>`:''}${t.note?`<span>${esc(t.note)}</span>`:''}</div>
       </div>`;
     });
   }
   wrap.innerHTML=html;
+  $('#tfSaveBtn').onclick=()=>{
+    const fromId=$('#tfFrom').value, toId=$('#tfTo').value;
+    if(fromId===toId){ showToast('转出和转入账户不能相同'); return; }
+    const amount=+$('#tfAmount').value||0;
+    if(amount<=0){ showToast('请输入金额'); return; }
+    const fee=+$('#tfFee').value||0;
+    const fromAcc=state.data.finance.accounts.find(a=>a.id===fromId);
+    const toAcc=state.data.finance.accounts.find(a=>a.id===toId);
+    if(!fromAcc||!toAcc){ showToast('请选择账户'); return; }
+    if(Number(fromAcc.balance)<amount+fee){ showToast('转出账户余额不足'); return; }
+    fromAcc.balance=Number(fromAcc.balance)-amount-fee;
+    toAcc.balance=Number(toAcc.balance)+amount;
+    const transfer={id:uid(),from_account_id:fromId,to_account_id:toId,amount,fee,note:$('#tfNote').value.trim(),date:$('#tfDate').value,createdAt:Date.now()};
+    if(!state.data.finance.transfers) state.data.finance.transfers=[];
+    state.data.finance.transfers.unshift(transfer);
+    saveLocal(); scheduleSync(); renderFinance(); renderDashboard(); showToast('转账成功');
+  };
 }
-async function addDebt(){
-  const name=prompt('债务名称（如：房贷、借朋友）：'); if(!name||!name.trim())return;
-  const total=parseFloat(prompt('总金额：','0')||'0'); if(!total)return;
-  const due=prompt('到期日期（YYYY-MM-DD，可选）：')||'';
-  state.data.finance.debts.push({id:uid(),name:name.trim(),total_amount:total,paid_amount:0,due_date:due,status:'active',note:'',createdAt:Date.now()});
-  saveLocal(); scheduleSync(); renderFinance(); showToast('债务已添加');
-}
-async function repayDebt(id){
-  const d=state.data.finance.debts.find(x=>x.id===id); if(!d)return;
-  const remaining=Number(d.total_amount)-Number(d.paid_amount);
-  const amount=parseFloat(prompt('本次还款金额（剩余'+fmtMoney(remaining)+'）：','0')||'0');
-  if(!amount||amount<=0)return;
-  const accounts=state.data.finance.accounts;
-  let accId='';
-  if(accounts.length>0){
-    const accNames=accounts.map((a,i)=>(i+1)+'.'+a.name).join(' ');
-    const accIdx=parseInt(prompt('从哪个账户还？'+accNames+'（输入序号）：','1')||'1')-1;
-    accId=accounts[accIdx]?.id||accounts[0].id;
+
+// ===================== 统计报表 =====================
+function renderFinanceStats(wrap){
+  const now=new Date(); const curMonth=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+  const months=[];
+  for(let i=5;i>=0;i--){ const d=new Date(now.getFullYear(),now.getMonth()-i,1); months.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')); }
+  // 月度收支
+  let monthHtml='<div class="card" style="margin-bottom:12px"><div style="font-weight:600;margin-bottom:10px">月度收支趋势</div><div class="bar-chart">';
+  const maxV=Math.max(...months.map(m=>{const e=state.data.finance.records.filter(f=>f.date.startsWith(m)&&(f.record_type==='income'||f.record_type==='expense')).reduce((a,b)=>a+Number(b.amount),0);return e;}),1);
+  months.forEach(m=>{
+    const inc=state.data.finance.records.filter(f=>f.record_type==='income'&&f.date.startsWith(m)).reduce((a,b)=>a+Number(b.amount),0);
+    const exp=state.data.finance.records.filter(f=>f.record_type==='expense'&&f.date.startsWith(m)).reduce((a,b)=>a+Number(b.amount),0);
+    monthHtml+=`<div class="bar-col"><div class="bar" style="height:${inc/maxV*100}%;background:var(--success)" title="收入 ${fmtMoney(inc)}"></div><div class="bar" style="height:${exp/maxV*100}%;background:var(--danger)" title="支出 ${fmtMoney(exp)}"></div><span class="bar-label">${m.slice(5)}月</span></div>`;
+  });
+  monthHtml+='</div><div style="display:flex;gap:16px;justify-content:center;margin-top:8px;font-size:.8rem"><span><i style="display:inline-block;width:10px;height:10px;background:var(--success);border-radius:2px;margin-right:4px"></i>收入</span><span><i style="display:inline-block;width:10px;height:10px;background:var(--danger);border-radius:2px;margin-right:4px"></i>支出</span></div></div>';
+  // 本月分类支出
+  const cats={};
+  state.data.finance.records.filter(f=>f.record_type==='expense'&&f.date.startsWith(curMonth)).forEach(f=>{ cats[f.category_name||f.category||'其他']=(cats[f.category_name||f.category||'其他']||0)+Number(f.amount); });
+  const catTotal=Object.values(cats).reduce((a,b)=>a+b,0);
+  const colors=['#e67e22','#3498db','#2ecc71','#e74c3c','#9b59b6','#f39c12','#1abc9c','#e91e63','#34495e','#16a085'];
+  let catHtml='<div class="card" style="margin-bottom:12px"><div style="font-weight:600;margin-bottom:10px">本月支出分类</div>';
+  if(catTotal===0){ catHtml+='<div style="color:var(--text2);font-size:.85rem;text-align:center;padding:16px">本月暂无支出</div>'; }
+  else{
+    const entries=Object.entries(cats).sort((a,b)=>b[1]-a[1]);
+    entries.forEach(([cat,val],i)=>{
+      const pct=(val/catTotal*100).toFixed(1);
+      catHtml+=`<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:.85rem;margin-bottom:4px"><span>${esc(cat)}</span><span>${fmtMoney(val)} (${pct}%)</span></div><div class="progress-bar" style="height:8px"><div class="progress-fill" style="width:${pct}%;background:${colors[i%colors.length]}"></div></div></div>`;
+    });
   }
-  const acc=accounts.find(a=>a.id===accId);
-  state.data.finance.records.unshift({id:uid(),date:todayStr(),record_type:'debt_repayment',category:'还债',category_name:'还债',amount,account_id:accId,debt_id:id,note:'还'+d.name,payment_method:acc?.name||'',createdAt:Date.now()});
-  if(acc) acc.balance=Number(acc.balance)-amount;
-  d.paid_amount=Number(d.paid_amount)+amount;
-  if(Number(d.paid_amount)>=Number(d.total_amount)) d.status='paid';
-  saveLocal(); scheduleSync(); renderFinance(); showToast('还款成功，从'+(acc?.name||'账户')+'扣除'+fmtMoney(amount));
+  catHtml+='</div>';
+  // 账户资产分布
+  let accHtml='<div class="card"><div style="font-weight:600;margin-bottom:10px">账户资产分布</div>';
+  const totalAssets=state.data.finance.accounts.reduce((a,b)=>a+Number(b.balance),0);
+  if(totalAssets<=0){ accHtml+='<div style="color:var(--text2);font-size:.85rem;text-align:center;padding:16px">暂无资产</div>'; }
+  else{
+    state.data.finance.accounts.forEach((a,i)=>{
+      const pct=(a.balance/totalAssets*100).toFixed(1);
+      accHtml+=`<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:.85rem;margin-bottom:4px"><span><i class="fas fa-wallet" style="color:var(--accent);margin-right:4px"></i>${esc(a.name)}</span><span>${fmtMoney(a.balance)} (${pct}%)</span></div><div class="progress-bar" style="height:8px"><div class="progress-fill" style="width:${pct}%;background:${colors[i%colors.length]}"></div></div></div>`;
+    });
+  }
+  accHtml+='</div>';
+  // 汇总数字
+  const yearIncome=state.data.finance.records.filter(f=>f.record_type==='income'&&f.date.startsWith(now.getFullYear())).reduce((a,b)=>a+Number(b.amount),0);
+  const yearExpense=state.data.finance.records.filter(f=>f.record_type==='expense'&&f.date.startsWith(now.getFullYear())).reduce((a,b)=>a+Number(b.amount),0);
+  const totalDebt=state.data.finance.debts.filter(d=>d.debt_type!=='lend'&&d.status==='active').reduce((a,b)=>a+(Number(b.total_amount)-Number(b.paid_amount)),0);
+  const totalLend=state.data.finance.debts.filter(d=>d.debt_type==='lend'&&d.status==='active').reduce((a,b)=>a+(Number(b.total_amount)-Number(b.paid_amount)),0);
+  let sumHtml='<div class="kpi-row" style="margin-bottom:12px"><div class="card kpi-card"><div class="kpi-val">'+fmtMoney(yearIncome)+'</div><div class="kpi-label">本年收入</div></div><div class="card kpi-card"><div class="kpi-val">'+fmtMoney(yearExpense)+'</div><div class="kpi-label">本年支出</div></div><div class="card kpi-card"><div class="kpi-val">'+fmtMoney(yearIncome-yearExpense)+'</div><div class="kpi-label">本年结余</div></div></div>';
+  sumHtml+='<div class="kpi-row" style="margin-bottom:12px"><div class="card kpi-card"><div class="kpi-val">'+fmtMoney(totalAssets)+'</div><div class="kpi-label">总资产</div></div><div class="card kpi-card"><div class="kpi-val" style="color:var(--danger)">'+fmtMoney(totalDebt)+'</div><div class="kpi-label">待还债务</div></div><div class="card kpi-card"><div class="kpi-val" style="color:var(--success)">'+fmtMoney(totalLend)+'</div><div class="kpi-label">待收债权</div></div></div>';
+  wrap.innerHTML=sumHtml+monthHtml+catHtml+accHtml;
 }
-async function delDebt(id){ const ok=await showConfirm('删除债务','确定删除此债务记录？'); if(!ok)return; state.data.finance.debts=state.data.finance.debts.filter(d=>d.id!==id); saveLocal(); scheduleSync(); renderFinance(); }
+
 function renderFinanceRecords(wrap){
   const records=[...state.data.finance.records].sort((a,b)=>b.createdAt-a.createdAt);
   if(records.length===0){ wrap.innerHTML='<div class="empty"><div class="icon">💰</div><p>暂无财务记录</p></div>'; return; }
@@ -1733,7 +1919,8 @@ $('#importFile').onchange=function(e){
       const ok=await showConfirm('导入数据', `将导入：\n${counts.join('，')||'空数据'}\n\n将覆盖当前数据，确定继续？`);
       if(!ok){ e.target.value=''; return; }
       state.data=Object.assign(JSON.parse(JSON.stringify(state.data)), d);
-      if(!state.data.finance) state.data.finance={accounts:[],categories:[],debts:[],budgets:[],records:[]};
+      if(!state.data.finance) state.data.finance={accounts:[],categories:[],debts:[],budgets:[],records:[],transfers:[]};
+      if(!state.data.finance.transfers) state.data.finance.transfers=[];
       ['tasks','classes','students','teaching','attendance','life','study','studySubjects','projects','milestones','updates'].forEach(k=>{ if(!Array.isArray(state.data[k])) state.data[k]=[]; });
       saveLocal(); scheduleSync(); applyTheme(); renderAll(); showToast('导入成功');
     }catch(err){ showToast('文件格式错误'); }
@@ -1747,7 +1934,7 @@ $('#clearDataBtn').onclick=async()=>{
   if(state.user){
     showToast('正在删除云端数据…');
     const uid_=state.user.id;
-    const tables=['tasks','classes','students','teaching_records','attendance','life_records','study_records','study_subjects','projects','project_milestones','project_updates','finance_accounts','finance_categories','finance_debts','finance_budgets','finance_records'];
+    const tables=['tasks','classes','students','teaching_records','attendance','life_records','study_records','study_subjects','projects','project_milestones','project_updates','finance_accounts','finance_categories','finance_debts','finance_budgets','finance_records','finance_transfers'];
     for(const table of tables){ try{ await supabase.from(table).delete().eq('user_id',uid_); }catch(e){} }
   }
   state.data.tasks=[]; state.data.classes=[]; state.data.students=[]; state.data.teaching=[]; state.data.attendance=[];
