@@ -159,6 +159,7 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .modal-mask.open{display:flex}
 .modal{background:var(--card);border-radius:var(--radius);width:100%;max-width:500px;max-height:88vh;overflow-y:auto;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,0.3);animation:modalIn .25s ease}
 @keyframes modalIn{from{opacity:0;transform:scale(.95) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}
+@keyframes bannerIn{from{opacity:0;transform:translate(-50%,-20px)}to{opacity:1;transform:translate(-50%,0)}}
 .modal h3{margin-bottom:14px;font-size:1.1rem;display:flex;align-items:center;gap:8px}
 .form-row{margin-bottom:12px}
 .form-row label{display:block;font-size:.85rem;color:var(--text2);margin-bottom:4px}
@@ -346,6 +347,7 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
       <div class="card stat-card"><div class="stat-val" id="statBalance">0</div><div class="stat-label">本月结余</div></div>
     </div>
     <div class="section-title"><i class="fas fa-clock" style="color:var(--accent)"></i> 今日安排</div>
+    <div id="upcomingReminders"></div>
     <div class="card" id="todayTimeline"></div>
     <div class="section-title"><i class="fas fa-calendar-week" style="color:var(--accent)"></i> 本周概览</div>
     <div class="card"><div class="week-table" id="weekTable"></div></div>
@@ -360,7 +362,8 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
       <select id="taskPriority" style="width:auto;min-width:80px;border-radius:30px;padding:0 12px">
         <option value="medium">中</option><option value="high">高</option><option value="low">低</option>
       </select>
-      <input type="datetime-local" id="taskDue" style="width:auto;min-width:140px;border-radius:30px;padding:0 12px" />
+      <input type="datetime-local" id="taskDue" style="width:auto;min-width:140px;border-radius:30px;padding:0 12px" title="截止时间" />
+      <input type="datetime-local" id="taskRemind" style="width:auto;min-width:140px;border-radius:30px;padding:0 12px" title="提醒时间" />
       <button class="primary" id="taskAddBtn" style="border-radius:30px;padding:0 18px"><i class="fas fa-plus"></i></button>
     </div>
     <div class="filter-row" id="taskFilters">
@@ -499,6 +502,8 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
       <div class="setting-row"><span class="label">头像</span><span id="currentAvatar" style="font-size:1.4rem;cursor:pointer" onclick="document.getElementById('avatarPicker').style.display='grid'">😊</span></div>
       <div class="emoji-grid" id="avatarPicker" style="display:none"></div>
       <div class="setting-row"><span class="label">云端同步</span><div class="toggle on" id="syncToggle"></div></div>
+      <div class="setting-row"><span class="label">桌面提醒</span><div class="toggle" id="remindToggle"></div></div>
+      <div class="setting-row"><span class="label">通知权限</span><button class="ghost" id="notifPermBtn" style="min-height:32px;padding:0 12px;font-size:.8rem">请求权限</button></div>
       <div class="setting-row"><button class="ghost" id="logoutBtn" style="width:100%"><i class="fas fa-sign-out-alt"></i> 退出登录</button></div>
     </div>
     <div class="setting-group">
@@ -649,7 +654,7 @@ const LOCAL_KEY = 'my_records_v3';
 let state = {
   user: null,
   localMode: true,
-  data: { settings:{nickname:'',avatar:'😊',theme:'sunny',darkMode:'auto',fontSize:'medium',syncEnabled:true},
+  data: { settings:{nickname:'',avatar:'😊',theme:'sunny',darkMode:'auto',fontSize:'medium',syncEnabled:true,remindEnabled:false},
     tasks:[], classes:[], students:[], teaching:[], attendance:[],
     life:[], study:[], studySubjects:[], projects:[], milestones:[], updates:[],
     finance:{accounts:[],categories:[],debts:[],budgets:[],records:[],transfers:[]} },
@@ -777,7 +782,6 @@ async function doAuth(mode){
   const email=$('#authEmail').value.trim(), pwd=$('#authPassword').value;
   if(!email||!pwd){ showAuthStatus('请输入邮箱和密码','error'); return; }
   if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ showAuthStatus('邮箱格式不正确','error'); return; }
-  if(pwd.length<6){ showAuthStatus('密码至少6位','error'); return; }
   $('#authSubmitBtn').disabled=true;
   showAuthStatus(mode==='login'?'正在登录…':'正在注册…','info');
   try{
@@ -798,12 +802,16 @@ async function doAuth(mode){
       }
     }
   }catch(e){
-    let msg = e.message || '操作失败';
-    if(msg.includes('Invalid login')) msg='邮箱或密码错误';
-    else if(msg.includes('already registered')) msg='该邮箱已注册，请直接登录';
-    else if(msg.includes('Email not confirmed')) msg='邮箱未验证，请先去邮箱点击验证链接';
-    else if(msg.includes('network')||msg.includes('Failed')) msg='网络连接失败，请检查网络';
+    let msg = e.message || e.error_description || e.msg || '操作失败';
+    const lower = msg.toLowerCase();
+    if(lower.includes('invalid login')||lower.includes('invalid credentials')) msg='邮箱或密码错误，请检查后重试';
+    else if(lower.includes('already registered')||lower.includes('already exists')) msg='该邮箱已注册，请直接登录';
+    else if(lower.includes('email not confirmed')) msg='邮箱未验证，请先去邮箱点击验证链接';
+    else if(lower.includes('password')&&lower.includes('at least')) msg=msg; // 保留原始密码长度提示
+    else if(lower.includes('network')||lower.includes('failed to fetch')||lower.includes('load failed')) msg='网络连接失败，请检查网络后重试';
+    else if(lower.includes('rate limit')) msg='操作太频繁，请稍后再试';
     showAuthStatus(msg,'error');
+    console.error('Auth error:', e);
   }
   $('#authSubmitBtn').disabled=false;
 }
@@ -813,6 +821,7 @@ function enterApp(){
   $('#mainContent').style.display='block';
   $('#bottomNav').style.display='flex';
   $('#fab').style.display='flex';
+  startReminderCheck();
   if(!state.localMode){
     const hasLocal = ['tasks','teaching','life','study','projects'].some(k=>state.data[k]?.length>0);
     if(hasLocal) syncToCloud().then(()=>syncFromCloud()).then(()=>renderAll());
@@ -853,6 +862,17 @@ function renderDashboard(){
   $('#statDone').textContent=doneTasks.length;
   $('#statStudy').textContent=studyMin;
   $('#statBalance').textContent=fmtMoney(finIn-finOut);
+  // 即将提醒
+  const ur=$('#upcomingReminders');
+  const now=new Date();
+  const upcoming=state.data.tasks.filter(t=>!t.done&&!t.reminded&&t.remind_at&&new Date(t.remind_at)>now).sort((a,b)=>a.remind_at.localeCompare(b.remind_at)).slice(0,3);
+  if(upcoming.length>0){
+    ur.innerHTML='<div class="card" style="margin-bottom:12px;border-left:3px solid var(--accent)"><div style="font-weight:600;margin-bottom:8px"><i class="fas fa-bell" style="color:var(--accent)"></i> 即将提醒</div>'+upcoming.map(t=>{
+      const d=new Date(t.remind_at); const diff=Math.round((d-now)/60000);
+      const timeStr=diff<60?diff+'分钟后':diff<1440?Math.floor(diff/60)+'小时后':Math.floor(diff/1440)+'天后';
+      return `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span>${esc(t.title)}</span><span style="color:var(--accent);font-size:.8rem">${timeStr}</span></div>`;
+    }).join('')+'</div>';
+  } else ur.innerHTML='';
   const tl=$('#todayTimeline');
   if(todayTasks.length===0){
     tl.innerHTML='<div class="empty" style="padding:16px"><div class="icon">🎉</div><p>今天没有待办，享受清闲吧</p></div>';
@@ -905,9 +925,10 @@ function addTask(){
   if(!text) return;
   const priority=$('#taskPriority').value;
   const due=$('#taskDue').value;
-  const task={id:uid(),title:text,priority,due_date:due?due.slice(0,10):'',due_time:due&&due.length>10?due.slice(11,16):'',tags:[],note:'',done:false,createdAt:Date.now()};
+  const remind=$('#taskRemind').value;
+  const task={id:uid(),title:text,priority,due_date:due?due.slice(0,10):'',due_time:due&&due.length>10?due.slice(11,16):'',remind_at:remind||'',reminded:false,tags:[],note:'',done:false,createdAt:Date.now()};
   state.data.tasks.unshift(task);
-  input.value=''; $('#taskDue').value='';
+  input.value=''; $('#taskDue').value=''; $('#taskRemind').value='';
   saveLocal(); scheduleSync(); renderTasks(); renderDashboard(); showToast('已添加');
 }
 function renderTasks(){
@@ -931,7 +952,7 @@ function renderTasks(){
         <div class="list-inner">
           <div class="priority-bar p-${t.priority}"></div>
           <div class="checkbox ${t.done?'checked':''}" data-id="${t.id}"></div>
-          <span class="item-text">${esc(t.title)}</span>
+          <span class="item-text">${esc(t.title)}${t.remind_at&&!t.reminded&&!t.done?' <i class="fas fa-bell" style="color:var(--accent);font-size:.7rem;margin-left:4px" title="提醒: '+t.remind_at.replace('T',' ')+'"></i>':''}</span>
           ${t.due_date?`<span class="item-meta ${overdue?'overdue':''}">${fmtDate(t.due_date)}${t.due_time?' '+t.due_time:''}</span>`:''}
         </div>
       </div>`;
@@ -1883,6 +1904,10 @@ function openSettings(){
   $('#setDarkMode').value=state.data.settings.darkMode;
   $('#setFontSize').value=state.data.settings.fontSize;
   $('#syncToggle').classList.toggle('on', state.data.settings.syncEnabled!==false);
+  $('#remindToggle').classList.toggle('on', state.data.settings.remindEnabled===true);
+  if('Notification' in window){
+    $('#notifPermBtn').textContent=Notification.permission==='granted'?'已允许':Notification.permission==='denied'?'已拒绝':'请求权限';
+  }
   $('#logoutBtn').style.display=state.localMode?'none':'flex';
   const emojis=['😊','😎','🤓','🥳','🤔','😴','🤯','🥰','😇','🤠','🦊','🐱','🐶','🐼','🦁','🐸','🌟','🔥','💡','🎯','🚀','⭐','🌈','🍀','📚','✏️','🎨','🎵'];
   const grid=$('#avatarPicker');
@@ -1899,6 +1924,25 @@ $$('.theme-dot').forEach(d=>d.onclick=function(){ state.data.settings.theme=this
 $('#setDarkMode').onchange=function(){ state.data.settings.darkMode=this.value; applyTheme(); saveLocal(); scheduleSync(); };
 $('#setFontSize').onchange=function(){ state.data.settings.fontSize=this.value; applyTheme(); saveLocal(); scheduleSync(); };
 $('#syncToggle').onclick=function(){ this.classList.toggle('on'); state.data.settings.syncEnabled=this.classList.contains('on'); saveLocal(); if(state.data.settings.syncEnabled) scheduleSync(); };
+$('#remindToggle').onclick=function(){
+  this.classList.toggle('on');
+  state.data.settings.remindEnabled=this.classList.contains('on');
+  saveLocal();
+  if(state.data.settings.remindEnabled){
+    if('Notification' in window && Notification.permission!=='granted'){
+      Notification.requestPermission().then(p=>{
+        if(p!=='granted'){ showToast('请在浏览器设置中允许通知权限'); this.classList.remove('on'); state.data.settings.remindEnabled=false; saveLocal(); }
+        else { showToast('提醒已开启'); startReminderCheck(); }
+      });
+    } else { startReminderCheck(); showToast('提醒已开启'); }
+  }
+};
+$('#notifPermBtn').onclick=async function(){
+  if(!('Notification' in window)){ showToast('此浏览器不支持通知'); return; }
+  const p=await Notification.requestPermission();
+  this.textContent=p==='granted'?'已允许':p==='denied'?'已拒绝（去浏览器设置开启）':'未决定';
+  if(p==='granted') showToast('通知权限已开启');
+};
 $('#logoutBtn').onclick=async()=>{ try{ await supabase.auth.signOut(); }catch(e){} state.localMode=true; state.user=null; $('#settingsModal').classList.remove('open'); showToast('已退出登录'); location.reload(); };
 $('#syncNowBtn').onclick=async()=>{ if(state.localMode){ showToast('本地模式无需同步'); return; } await syncToCloud(); showToast('同步完成'); };
 $('#exportBtn').onclick=()=>{ const blob=new Blob([JSON.stringify(state.data,null,2)],{type:'application/json'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=`记录中心_${todayStr()}.json`; a.click(); URL.revokeObjectURL(url); showToast('已导出'); };
@@ -1942,6 +1986,63 @@ $('#clearDataBtn').onclick=async()=>{
   state.data.finance={accounts:[],categories:[],debts:[],budgets:[],records:[]};
   saveLocal(); $('#settingsModal').classList.remove('open'); renderAll(); showToast('所有数据已彻底清空');
 };
+
+// ===================== 提醒功能 =====================
+let reminderTimer=null;
+function startReminderCheck(){
+  if(reminderTimer) clearInterval(reminderTimer);
+  if(!state.data.settings.remindEnabled) return;
+  checkReminders();
+  reminderTimer=setInterval(checkReminders, 30000); // 每30秒检查一次
+}
+function checkReminders(){
+  if(!state.data.settings.remindEnabled) return;
+  const now=new Date();
+  const nowStr=now.toISOString().slice(0,16);
+  let triggered=false;
+  state.data.tasks.forEach(t=>{
+    if(t.done||t.reminded||!t.remind_at) return;
+    if(t.remind_at<=nowStr){
+      t.reminded=true;
+      triggered=true;
+      showReminderNotification(t);
+    }
+  });
+  if(triggered){ saveLocal(); scheduleSync(); renderTasks(); renderDashboard(); }
+}
+function showReminderNotification(task){
+  // 浏览器通知
+  if('Notification' in window && Notification.permission==='granted'){
+    try{
+      const n=new Notification('⏰ 任务提醒',{body:task.title,icon:'',tag:task.id});
+      n.onclick=()=>{ window.focus(); switchPage('tasks'); n.close(); };
+      setTimeout(()=>n.close(), 15000);
+    }catch(e){}
+  }
+  // 页面内横幅提醒
+  showReminderBanner(task);
+  // 声音提醒（可选）
+  try{
+    const ctx=new (window.AudioContext||window.webkitAudioContext)();
+    const osc=ctx.createOscillator(); const gain=ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.frequency.value=880; gain.gain.setValueAtTime(0.3,ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01,ctx.currentTime+0.5);
+    osc.start(); osc.stop(ctx.currentTime+0.5);
+  }catch(e){}
+}
+function showReminderBanner(task){
+  let banner=$('#reminderBanner');
+  if(!banner){
+    banner=document.createElement('div');
+    banner.id='reminderBanner';
+    banner.style.cssText='position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:9999;background:var(--accent);color:#fff;padding:14px 24px;border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.2);max-width:90%;display:flex;align-items:center;gap:12px;animation:bannerIn .3s ease';
+    document.body.appendChild(banner);
+  }
+  banner.innerHTML=`<i class="fas fa-bell" style="font-size:1.2rem"></i><span style="flex:1"><b>提醒：</b>${esc(task.title)}</span><button onclick="this.parentElement.remove()" style="background:rgba(255,255,255,.2);border:none;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer">×</button>`;
+  banner.style.display='flex';
+  setTimeout(()=>{ if(banner) banner.style.display='none'; }, 10000);
+}
 
 // ===================== 快捷键 =====================
 document.addEventListener('keydown',e=>{
