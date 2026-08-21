@@ -1957,7 +1957,7 @@ function openSettings(){
   if('Notification' in window){
     $('#notifPermBtn').textContent=Notification.permission==='granted'?'已允许':Notification.permission==='denied'?'已拒绝':'请求权限';
   }
-  $('#logoutBtn').style.display=state.localMode?'none':'flex';
+
   const emojis=['😊','😎','🤓','🥳','🤔','😴','🤯','🥰','😇','🤠','🦊','🐱','🐶','🐼','🦁','🐸','🌟','🔥','💡','🎯','🚀','⭐','🌈','🍀','📚','✏️','🎨','🎵'];
   const grid=$('#avatarPicker');
   grid.innerHTML=emojis.map(e=>`<div class="emoji-item ${e===state.data.settings.avatar?'active':''}">${e}</div>`).join('');
