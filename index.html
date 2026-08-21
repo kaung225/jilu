@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
@@ -306,7 +306,7 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 </div>
 
 <!-- 登录页 -->
-<div class="auth-page" id="authPage">
+<div class="auth-page" id="authPage" style="display:none">
   <div class="auth-card">
     <h2>📋 个人记录中心</h2>
     <p class="sub">登录后数据云端同步，多设备可用</p>
@@ -331,6 +331,7 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
   <div class="actions">
     <span class="sync-status" id="syncStatus" style="display:none"><span class="dot"></span><span id="syncText">已同步</span></span>
     <button class="icon-btn" id="searchBtn" title="搜索"><i class="fas fa-search"></i></button>
+    <button class="icon-btn" id="bellBtn" title="提醒" style="position:relative"><i class="fas fa-bell"></i><span id="bellBadge" style="display:none;position:absolute;top:-2px;right:-2px;background:var(--danger);color:#fff;font-size:.6rem;min-width:16px;height:16px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 4px">0</span></button>
     <div class="user-avatar" id="userAvatarBtn" title="设置">😊</div>
   </div>
 </div>
@@ -377,6 +378,12 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 
   <!-- 教学 -->
   <div id="page-teaching" class="page">
+    <div class="sub-tabs record-tabs" style="margin-bottom:12px">
+      <div class="sub-tab active" data-sub="teaching"><i class="fas fa-chalkboard-teacher"></i> 教学</div>
+      <div class="sub-tab" data-sub="life"><i class="fas fa-heart"></i> 生活</div>
+      <div class="sub-tab" data-sub="study"><i class="fas fa-graduation-cap"></i> 学习</div>
+      <div class="sub-tab" data-sub="project"><i class="fas fa-rocket"></i> 创业</div>
+    </div>
     <div class="filter-row" id="teachingFilters">
       <div class="filter-chip active" data-f="all">全部</div>
       <div class="filter-chip" data-f="manage">班级管理</div>
@@ -394,6 +401,12 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 
   <!-- 生活 -->
   <div id="page-life" class="page">
+    <div class="sub-tabs record-tabs" style="margin-bottom:12px">
+      <div class="sub-tab" data-sub="teaching"><i class="fas fa-chalkboard-teacher"></i> 教学</div>
+      <div class="sub-tab active" data-sub="life"><i class="fas fa-heart"></i> 生活</div>
+      <div class="sub-tab" data-sub="study"><i class="fas fa-graduation-cap"></i> 学习</div>
+      <div class="sub-tab" data-sub="project"><i class="fas fa-rocket"></i> 创业</div>
+    </div>
     <div class="filter-row" id="lifeFilters">
       <div class="filter-chip active" data-f="all">全部</div>
       <div class="filter-chip" data-f="饮食">饮食</div>
@@ -414,6 +427,12 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 
   <!-- 学习 -->
   <div id="page-study" class="page">
+    <div class="sub-tabs record-tabs" style="margin-bottom:12px">
+      <div class="sub-tab" data-sub="teaching"><i class="fas fa-chalkboard-teacher"></i> 教学</div>
+      <div class="sub-tab" data-sub="life"><i class="fas fa-heart"></i> 生活</div>
+      <div class="sub-tab active" data-sub="study"><i class="fas fa-graduation-cap"></i> 学习</div>
+      <div class="sub-tab" data-sub="project"><i class="fas fa-rocket"></i> 创业</div>
+    </div>
     <div class="kpi-row">
       <div class="card kpi-card"><div class="kpi-val" id="studyTotal">0</div><div class="kpi-label">总时长(分)</div></div>
       <div class="card kpi-card"><div class="kpi-val" id="studyMonth">0</div><div class="kpi-label">本月(分)</div></div>
@@ -435,6 +454,12 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 
   <!-- 创业 -->
   <div id="page-project" class="page">
+    <div class="sub-tabs record-tabs" style="margin-bottom:12px">
+      <div class="sub-tab" data-sub="teaching"><i class="fas fa-chalkboard-teacher"></i> 教学</div>
+      <div class="sub-tab" data-sub="life"><i class="fas fa-heart"></i> 生活</div>
+      <div class="sub-tab" data-sub="study"><i class="fas fa-graduation-cap"></i> 学习</div>
+      <div class="sub-tab active" data-sub="project"><i class="fas fa-rocket"></i> 创业</div>
+    </div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
       <div class="section-title" style="margin:0"><i class="fas fa-rocket" style="color:var(--accent)"></i> 我的项目</div>
       <button class="primary" id="addProjectBtn" style="min-height:36px;padding:0 14px;font-size:.85rem"><i class="fas fa-plus"></i> 新建</button>
@@ -459,12 +484,9 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 
 <!-- 底部导航 -->
 <nav class="bottom-nav" id="bottomNav" style="display:none">
-  <button class="nav-tab active" data-page="dashboard"><i class="fas fa-home"></i><span>今天</span></button>
-  <button class="nav-tab" data-page="tasks"><i class="fas fa-check-square"></i><span>杂碎</span></button>
-  <button class="nav-tab" data-page="teaching"><i class="fas fa-chalkboard-teacher"></i><span>教学</span></button>
-  <button class="nav-tab" data-page="life"><i class="fas fa-heart"></i><span>生活</span></button>
-  <button class="nav-tab" data-page="study"><i class="fas fa-graduation-cap"></i><span>学习</span></button>
-  <button class="nav-tab" data-page="project"><i class="fas fa-rocket"></i><span>创业</span></button>
+  <button class="nav-tab active" data-page="dashboard"><i class="fas fa-home"></i><span>首页</span></button>
+  <button class="nav-tab" data-page="tasks"><i class="fas fa-check-square"></i><span>待办</span></button>
+  <button class="nav-tab" data-page="records"><i class="fas fa-book-open"></i><span>记录</span></button>
   <button class="nav-tab" data-page="finance"><i class="fas fa-yen-sign"></i><span>财务</span></button>
 </nav>
 
@@ -504,7 +526,8 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
       <div class="setting-row"><span class="label">云端同步</span><div class="toggle on" id="syncToggle"></div></div>
       <div class="setting-row"><span class="label">桌面提醒</span><div class="toggle" id="remindToggle"></div></div>
       <div class="setting-row"><span class="label">通知权限</span><button class="ghost" id="notifPermBtn" style="min-height:32px;padding:0 12px;font-size:.8rem">请求权限</button></div>
-      <div class="setting-row"><button class="ghost" id="logoutBtn" style="width:100%"><i class="fas fa-sign-out-alt"></i> 退出登录</button></div>
+      <div class="setting-row"><span class="label">测试通知</span><button class="ghost" id="testNotifBtn" style="min-height:32px;padding:0 12px;font-size:.8rem">发送测试</button></div>
+      <div class="setting-row"><span class="label">应用图标</span><button class="ghost" id="appIconBtn" style="min-height:32px;padding:0 12px;font-size:.8rem">上传图标</button><input type="file" id="appIconInput" accept="image/*" style="display:none" /></div>
     </div>
     <div class="setting-group">
       <h4>外观</h4>
@@ -580,9 +603,12 @@ function sbHeaders(){
 }
 async function sbAuth(method, path, body){
   try{
+    const controller = new AbortController();
+    const timeoutId = setTimeout(()=>controller.abort(), 10000);
     const res = await fetch(SUPABASE_URL+'/auth/v1'+path, {
-      method, headers: sbHeaders(), body: body?JSON.stringify(body):undefined
+      method, headers: sbHeaders(), body: body?JSON.stringify(body):undefined, signal:controller.signal
     });
+    clearTimeout(timeoutId);
     const data = await res.json();
     if(!res.ok) throw new Error(data.error_description || data.msg || data.message || '请求失败');
     return data;
@@ -594,7 +620,10 @@ async function sbRest(method, table, query, body){
   const headers = sbHeaders();
   if(method==='POST' && body) headers['Prefer'] = 'resolution=merge-duplicates';
   try{
-    const res = await fetch(url, {method, headers, body: body?JSON.stringify(body):undefined});
+    const controller = new AbortController();
+    const timeoutId = setTimeout(()=>controller.abort(), 10000);
+    const res = await fetch(url, {method, headers, body: body?JSON.stringify(body):undefined, signal:controller.signal});
+    clearTimeout(timeoutId);
     if(res.status===204) return {data:null,error:null};
     const data = await res.json();
     if(!res.ok) throw new Error(data.message || data.details || '请求失败');
@@ -649,6 +678,7 @@ const supabase = {
 
 // 兼容旧代码
 const LOCAL_KEY = 'my_records_v3';
+const PUBLIC_USER_ID = '00000000-0000-0000-0000-000000000000';
 
 // ===================== 状态 =====================
 let state = {
@@ -702,9 +732,9 @@ function loadLocal(){ try{ const r=localStorage.getItem(LOCAL_KEY); if(r){ const
 
 // ===================== 云端同步 =====================
 async function syncToCloud(){
-  if(state.localMode || !state.user || !state.data.settings.syncEnabled) return;
+  if(!state.data.settings.syncEnabled) return;
   setSyncStatus('syncing');
-  const uid_ = state.user.id;
+  const uid_ = PUBLIC_USER_ID;
   try{
     const tables = [
       ['tasks', state.data.tasks], ['classes', state.data.classes], ['students', state.data.students],
@@ -722,22 +752,22 @@ async function syncToCloud(){
         await supabase.from(table).upsert(data, {onConflict:'id'});
       }
     }
-    await supabase.from('profiles').upsert({id:uid_, nickname:state.data.settings.nickname, avatar:state.data.settings.avatar, theme:state.data.settings.theme, dark_mode:state.data.settings.darkMode, font_size:state.data.settings.fontSize, updated_at:new Date().toISOString()});
+    await supabase.from('profiles').upsert({id:PUBLIC_USER_ID, nickname:state.data.settings.nickname, avatar:state.data.settings.avatar, theme:state.data.settings.theme, dark_mode:state.data.settings.darkMode, font_size:state.data.settings.fontSize, updated_at:new Date().toISOString()});
     setSyncStatus('ok');
   }catch(e){ console.warn('同步失败', e); setSyncStatus('error'); }
 }
 async function syncFromCloud(){
-  if(state.localMode || !state.user) return;
+  if(!state.data.settings.syncEnabled) return;
   setSyncStatus('syncing');
-  const uid_ = state.user.id;
+  const uid_ = PUBLIC_USER_ID;
   try{
-    const map = {tasks:'tasks',classes:'classes',students:'students',teaching_records:'teaching',attendance:'attendance',life_records:'life',study_records:'study',study_subjects:'studySubjects',projects:'projects',project_milestones:'milestones',project_updates:'updates',finance_accounts:'financeAccounts',finance_categories:'financeCategories',finance_debts:'financeDebts',finance_budgets:'financeBudgets',finance_records:'financeRecords',finance_transfers:'financeTransfers'};
+    const map = {tasks:'tasks',classes:'classes',students:'students',teaching_records:'teaching',attendance:'attendance',life_records:'life',study_records:'study',study_subjects:'studySubjects',projects:'projects',project_milestones:'milestones',project_updates:'updates',finance_accounts:'accounts',finance_categories:'categories',finance_debts:'debts',finance_budgets:'budgets',finance_records:'records',finance_transfers:'transfers'};
+    const financeKeys = ['accounts','categories','debts','budgets','records','transfers'];
     for(const [table, key] of Object.entries(map)){
       const {data,error} = await supabase.from(table).eq('user_id', uid_);
       if(!error && data){
-        if(key.startsWith('finance')){
-          const fk = key.replace('finance','').toLowerCase();
-          state.data.finance[fk] = data;
+        if(financeKeys.includes(key)){
+          state.data.finance[key] = data;
         } else {
           state.data[key] = data;
         }
@@ -822,18 +852,15 @@ function enterApp(){
   $('#bottomNav').style.display='flex';
   $('#fab').style.display='flex';
   startReminderCheck();
-  if(!state.localMode){
-    const hasLocal = ['tasks','teaching','life','study','projects'].some(k=>state.data[k]?.length>0);
-    if(hasLocal) syncToCloud().then(()=>syncFromCloud()).then(()=>renderAll());
-    else syncFromCloud().then(()=>renderAll());
-  } else renderAll();
+  renderAll();
 }
 
 // ===================== 导航 =====================
 function switchPage(name){
+  if(name==='records') name='teaching';
   state.currentPage=name;
   $$('.page').forEach(p=>p.classList.toggle('active', p.id==='page-'+name));
-  $$('.nav-tab').forEach(t=>t.classList.toggle('active', t.dataset.page===name));
+  $$('.nav-tab').forEach(t=>t.classList.toggle('active', t.dataset.page===name || (name==='teaching'||name==='life'||name==='study'||name==='project') && t.dataset.page==='records'));
   $('#fabMenu').classList.remove('show');
   if(name==='dashboard') renderDashboard();
   if(name==='tasks') renderTasks();
@@ -844,6 +871,7 @@ function switchPage(name){
   if(name==='finance') renderFinance();
 }
 $$('.nav-tab').forEach(t=>t.addEventListener('click',()=>switchPage(t.dataset.page)));
+$$('.record-tabs .sub-tab').forEach(t=>t.addEventListener('click',()=>switchPage(t.dataset.sub)));
 
 // ===================== 仪表盘 =====================
 function renderDashboard(){
@@ -852,7 +880,7 @@ function renderDashboard(){
   const name=state.data.settings.nickname||'朋友';
   $('#greeting').innerHTML=esc(g)+'，<b>'+esc(name)+' 👋</b>';
   const today=todayStr();
-  const todayTasks=state.data.tasks.filter(t=>!t.done && (!t.due_date||t.due_date<=today));
+  const todayTasks=state.data.tasks.filter(t=>!t.done && t.due_date && t.due_date<=today);
   const doneTasks=state.data.tasks.filter(t=>t.done);
   const month=today.slice(0,7);
   const studyMin=state.data.study.filter(s=>s.date&&s.date.startsWith(month)).reduce((a,b)=>a+(b.duration||0),0);
@@ -935,7 +963,7 @@ function renderTasks(){
   const wrap=$('#taskList');
   let list=[...state.data.tasks];
   const today=todayStr();
-  if(state.filters.tasks==='today') list=list.filter(t=>!t.done&&(!t.due_date||t.due_date<=today));
+  if(state.filters.tasks==='today') list=list.filter(t=>!t.done&&t.due_date&&t.due_date<=today);
   else if(state.filters.tasks==='high') list=list.filter(t=>t.priority==='high'&&!t.done);
   else if(state.filters.tasks==='done') list=list.filter(t=>t.done);
   if(list.length===0){ wrap.innerHTML='<div class="empty"><div class="icon">📋</div><p>暂无杂碎</p></div>'; return; }
@@ -1876,6 +1904,27 @@ $('#drawerMask').onclick=closeDrawer;
 
 // ===================== 搜索 =====================
 $('#searchBtn').onclick=openSearch;
+$('#bellBtn').onclick=function(){
+  const upcoming=state.data.tasks.filter(t=>!t.done&&t.remind_at).sort((a,b)=>a.remind_at.localeCompare(b.remind_at));
+  const nowStr=new Date().toISOString().slice(0,16);
+  let html='<div style="padding:16px"><div style="font-weight:600;margin-bottom:12px"><i class="fas fa-bell" style="color:var(--accent)"></i> 提醒中心</div>';
+  if(upcoming.length===0){ html+='<div class="empty"><div class="icon">🔔</div><p>暂无提醒</p></div>'; }
+  else{
+    upcoming.forEach(t=>{
+      const isPast=t.remind_at<nowStr && !t.reminded;
+      html+=`<div style="padding:10px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+        <div><div style="font-weight:500">${esc(t.title)}</div><div style="font-size:.78rem;color:${isPast?'var(--danger)':'var(--text2)'}">${isPast?'⏰ 已到期：':'🕐 '}${t.remind_at.replace('T',' ')}</div></div>
+        ${isPast?'<span style="background:var(--danger);color:#fff;font-size:.7rem;padding:2px 8px;border-radius:10px">待处理</span>':''}
+      </div>`;
+    });
+  }
+  html+='</div>';
+  $('#drawerTitle').textContent='提醒中心';
+  $('#drawerBody').innerHTML=html;
+  openDrawer();
+  // 清除徽章
+  $('#bellBadge').style.display='none';
+};
 $('#closeSearchBtn').onclick=()=>$('#searchOverlay').classList.remove('open');
 $('#searchOverlay').addEventListener('click',e=>{ if(e.target.id==='searchOverlay') $('#searchOverlay').classList.remove('open'); });
 function openSearch(){ $('#searchOverlay').classList.add('open'); $('#searchInput').value=''; $('#searchResults').innerHTML=''; setTimeout(()=>$('#searchInput').focus(),80); }
@@ -1898,7 +1947,7 @@ $('#userAvatarBtn').onclick=openSettings;
 $('#closeSettingsBtn').onclick=()=>$('#settingsModal').classList.remove('open');
 $('#settingsModal').addEventListener('click',e=>{ if(e.target.id==='settingsModal') $('#settingsModal').classList.remove('open'); });
 function openSettings(){
-  $('#accountEmail').textContent=state.localMode?'本地模式':(state.user?.email||'已登录');
+  $('#accountEmail').textContent='数据共用模式（云端同步）';
   $('#setNickname').value=state.data.settings.nickname||'';
   $('#currentAvatar').textContent=state.data.settings.avatar;
   $('#setDarkMode').value=state.data.settings.darkMode;
@@ -1943,8 +1992,50 @@ $('#notifPermBtn').onclick=async function(){
   this.textContent=p==='granted'?'已允许':p==='denied'?'已拒绝（去浏览器设置开启）':'未决定';
   if(p==='granted') showToast('通知权限已开启');
 };
-$('#logoutBtn').onclick=async()=>{ try{ await supabase.auth.signOut(); }catch(e){} state.localMode=true; state.user=null; $('#settingsModal').classList.remove('open'); showToast('已退出登录'); location.reload(); };
-$('#syncNowBtn').onclick=async()=>{ if(state.localMode){ showToast('本地模式无需同步'); return; } await syncToCloud(); showToast('同步完成'); };
+$('#testNotifBtn').onclick=function(){
+  if(!('Notification' in window)){ showToast('此浏览器不支持通知'); return; }
+  if(Notification.permission!=='granted'){ showToast('请先允许通知权限'); return; }
+  try{
+    const n=new Notification('🔔 测试通知',{body:'提醒功能正常工作！',tag:'test'});
+    setTimeout(()=>n.close(),5000);
+    showToast('测试通知已发送');
+  }catch(e){ showToast('通知发送失败'); }
+};
+$('#appIconBtn').onclick=()=>$('#appIconInput').click();
+$('#appIconInput').onchange=function(e){
+  const file=e.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    const img=new Image();
+    img.onload=()=>{
+      const canvas=document.createElement('canvas');
+      const size=512; canvas.width=size; canvas.height=size;
+      const ctx=canvas.getContext('2d');
+      // 圆形裁剪
+      ctx.beginPath(); ctx.arc(size/2,size/2,size/2,0,Math.PI*2); ctx.clip();
+      ctx.drawImage(img,0,0,size,size);
+      const iconData=canvas.toDataURL('image/png');
+      // 更新favicon
+      let link=document.querySelector("link[rel*='icon']");
+      if(!link){ link=document.createElement('link'); link.rel='icon'; document.head.appendChild(link); }
+      link.href=iconData;
+      // 更新manifest
+      if(window.appManifest){
+        window.appManifest.icons=[{src:iconData,sizes:'512x512',type:'image/png'}];
+        const blob=new Blob([JSON.stringify(window.appManifest)],{type:'application/json'});
+        window.appManifestUrl=URL.createObjectURL(blob);
+        document.querySelector('link[rel=manifest]').href=window.appManifestUrl;
+      }
+      // 存本地
+      localStorage.setItem('app_icon',iconData);
+      showToast('应用图标已更新，添加到主屏幕后生效');
+    };
+    img.src=ev.target.result;
+  };
+  reader.readAsDataURL(file);
+  e.target.value='';
+};
+$('#syncNowBtn').onclick=async()=>{ await syncToCloud(); showToast('同步完成'); };
 $('#exportBtn').onclick=()=>{ const blob=new Blob([JSON.stringify(state.data,null,2)],{type:'application/json'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=`记录中心_${todayStr()}.json`; a.click(); URL.revokeObjectURL(url); showToast('已导出'); };
 $('#importBtn').onclick=()=>$('#importFile').click();
 $('#importFile').onchange=function(e){
@@ -1974,10 +2065,10 @@ $('#importFile').onchange=function(e){
 };
 $('#clearDataBtn').onclick=async()=>{
   const ok=await showConfirm('清空所有数据','确定要清空所有数据吗？此操作不可恢复！\n建议先导出备份。'); if(!ok) return;
-  const ok2=await showConfirm('再次确认','真的要删除所有记录吗？\n'+(state.user?'（已登录，云端数据也会删除）':'（本地模式，仅删除本设备）')); if(!ok2) return;
-  if(state.user){
+  const ok2=await showConfirm('再次确认','真的要删除所有记录吗？\n（云端数据也会删除）'); if(!ok2) return;
+  if(state.data.settings.syncEnabled){
     showToast('正在删除云端数据…');
-    const uid_=state.user.id;
+    const uid_=PUBLIC_USER_ID;
     const tables=['tasks','classes','students','teaching_records','attendance','life_records','study_records','study_subjects','projects','project_milestones','project_updates','finance_accounts','finance_categories','finance_debts','finance_budgets','finance_records','finance_transfers'];
     for(const table of tables){ try{ await supabase.from(table).delete().eq('user_id',uid_); }catch(e){} }
   }
@@ -1998,17 +2089,21 @@ function startReminderCheck(){
 function checkReminders(){
   if(!state.data.settings.remindEnabled) return;
   const now=new Date();
-  const nowStr=now.toISOString().slice(0,16);
+  /* 用Date对象比较，兼容带秒数格式 */
   let triggered=false;
   state.data.tasks.forEach(t=>{
     if(t.done||t.reminded||!t.remind_at) return;
-    if(t.remind_at<=nowStr){
+    if(new Date(t.remind_at).getTime()<=now.getTime()){
       t.reminded=true;
       triggered=true;
       showReminderNotification(t);
     }
   });
   if(triggered){ saveLocal(); scheduleSync(); renderTasks(); renderDashboard(); }
+  // 更新铃铛徽章：已到期但未完成的任务数
+  const overdue=state.data.tasks.filter(t=>!t.done&&t.remind_at&&new Date(t.remind_at).getTime()<=now.getTime()).length;
+  const badge=$('#bellBadge');
+  if(badge){ if(overdue>0){ badge.textContent=overdue; badge.style.display='flex'; } else badge.style.display='none'; }
 }
 function showReminderNotification(task){
   // 浏览器通知
@@ -2062,27 +2157,30 @@ function renderAll(){ applyTheme(); renderDashboard(); renderTasks(); renderTeac
 
 // ===================== 启动 =====================
 async function init(){
+  // 加载自定义应用图标
+  const savedIcon=localStorage.getItem('app_icon');
+  if(savedIcon){
+    let link=document.querySelector("link[rel*='icon']");
+    if(!link){ link=document.createElement('link'); link.rel='icon'; document.head.appendChild(link); }
+    link.href=savedIcon;
+  }
   const fill=$('#splashFill'), txt=$('#splashText');
   fill.style.width='20%'; txt.textContent='加载本地数据…';
   loadLocal();
   initFinanceDefaults();
   fill.style.width='40%'; txt.textContent='初始化…';
   sbInit();
-  fill.style.width='60%'; txt.textContent='检查登录状态…';
-  await initAuth();
-  fill.style.width='85%'; txt.textContent='准备就绪…';
-  if(state.user){
-    fill.style.width='95%'; txt.textContent='同步云端数据…';
-    await syncFromCloud();
-  }
+  fill.style.width='70%'; txt.textContent='同步云端数据…';
+  try{
+    await Promise.race([
+      syncFromCloud(),
+      new Promise((_,rej)=>setTimeout(()=>rej(new Error('同步超时')),15000))
+    ]);
+  }catch(e){ console.warn('云端同步失败，使用本地数据',e); }
   fill.style.width='100%';
   setTimeout(()=>{
     $('#splash').classList.add('hide');
-    if(state.user){ enterApp(); }
-    else{
-      $('#authPage').classList.add('show');
-      showAuthStatus('轻量客户端已就绪，可以登录/注册','success');
-    }
+    enterApp();
   },300);
   if('serviceWorker' in navigator){ navigator.serviceWorker.register('./sw.js').catch(()=>{}); }
 }
