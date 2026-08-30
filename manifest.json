@@ -1,26 +1,18 @@
 {
-  "name": "个人记录中心",
-  "short_name": "记录中心",
-  "description": "个人成长记录中心 - 任务、教学、生活、学习、创业、财务一站式记录",
+  "name": "小乐记录",
+  "short_name": "小乐记录",
+  "description": "个人全场景记录工具：待办、教学、生活、学习、创业、财务",
   "start_url": "./index.html",
   "display": "standalone",
-  "orientation": "portrait-primary",
   "background_color": "#f7f5f0",
   "theme_color": "#e67e22",
+  "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='42' fill='%23e67e22'/%3E%3Ctext x='96' y='130' font-size='100' text-anchor='middle' fill='white' font-family='sans-serif'%3E%F0%9F%93%96%3C/text%3E%3C/svg%3E",
-      "sizes": "192x192",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='112' fill='%23e67e22'/%3E%3Ctext x='256' y='340' font-size='260' text-anchor='middle' fill='white' font-family='sans-serif'%3E%F0%9F%93%96%3C/text%3E%3C/svg%3E",
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%23e67e22'/%3E%3Cstop offset='100%25' style='stop-color:%23f39c12'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='512' height='512' rx='112' fill='url(%23g)'/%3E%3Ctext x='256' y='350' font-size='260' font-weight='bold' fill='white' text-anchor='middle' font-family='Arial'%3E%E4%B9%90%3C/text%3E%3C/svg%3E",
       "sizes": "512x512",
       "type": "image/svg+xml",
       "purpose": "any maskable"
     }
-  ],
-  "categories": ["productivity", "utilities", "education"],
-  "lang": "zh-CN"
+  ]
 }
