@@ -3961,23 +3961,42 @@ window.switchPage = function(page){
   // 渲染对应页面
   if(page === 'dashboard' && typeof v9_renderDashboard === 'function') v9_renderDashboard();
   if(page === 'records'){
-    // 默认显示卡片板块首页
+    // 根据currentSub决定显示首页还是子页面
+    var sub = null;
+    try { sub = typeof currentSub !== 'undefined' ? currentSub.records : null; } catch(e){}
     var rh = document.getElementById('recordsHome');
     var rs = document.getElementById('recordsSub');
     var cm = document.getElementById('categoryManager');
-    if(rh) rh.style.display = 'block';
-    if(rs) rs.style.display = 'none';
+    if(sub && rh && rs){
+      rh.style.display = 'none';
+      rs.style.display = 'block';
+    } else if(rh && rs){
+      rh.style.display = 'block';
+      rs.style.display = 'none';
+    }
     if(cm) cm.style.display = 'none';
     if(typeof renderRecords === 'function') renderRecords();
   }
   if(page === 'finance'){
-    // 默认显示卡片板块首页
+    // 根据currentSub决定显示首页还是子页面
+    var fsub = null;
+    try { fsub = typeof currentSub !== 'undefined' ? currentSub.finance : null; } catch(e){}
     var fh = document.getElementById('financeHome');
     var fs = document.getElementById('financeSub');
     var cm2 = document.getElementById('categoryManager');
-    if(fh) fh.style.display = 'block';
-    if(fs) fs.style.display = 'none';
-    if(cm2) cm2.style.display = 'none';
+    if(fsub === 'categories' && cm2){
+      if(fh) fh.style.display = 'none';
+      if(fs) fs.style.display = 'none';
+      cm2.style.display = 'block';
+    } else if(fsub && fh && fs){
+      fh.style.display = 'none';
+      fs.style.display = 'block';
+      if(cm2) cm2.style.display = 'none';
+    } else if(fh && fs){
+      fh.style.display = 'block';
+      fs.style.display = 'none';
+      if(cm2) cm2.style.display = 'none';
+    }
     if(typeof renderFinance === 'function') renderFinance();
     if(typeof renderCategoryManager === 'function') renderCategoryManager();
   }
@@ -3986,6 +4005,66 @@ window.switchPage = function(page){
 
   // 滚动到顶部
   window.scrollTo(0, 0);
+};
+
+// --- 覆盖renderAll：只渲染内容，不重置显示状态 ---
+// 原v5的renderAll会调用switchPage(currentPage)，导致子页面显示状态被重置
+window.renderAll = function(){
+  try {
+    var page = typeof currentPage !== 'undefined' ? currentPage : 'dashboard';
+    // 只调用对应的渲染函数，不调用switchPage（避免重置显示状态）
+    if(page === 'dashboard' && typeof v9_renderDashboard === 'function'){
+      v9_renderDashboard();
+    }
+    if(page === 'records' && typeof renderRecords === 'function'){
+      renderRecords();
+      // 保持当前子页面显示状态
+      setTimeout(function(){
+        try {
+          var sub = typeof currentSub !== 'undefined' ? currentSub.records : null;
+          var rh = document.getElementById('recordsHome');
+          var rs = document.getElementById('recordsSub');
+          if(sub && rh && rs){
+            rh.style.display = 'none';
+            rs.style.display = 'block';
+          } else if(rh && rs){
+            rh.style.display = 'block';
+            rs.style.display = 'none';
+          }
+        } catch(e){}
+      }, 10);
+    }
+    if(page === 'finance' && typeof renderFinance === 'function'){
+      renderFinance();
+      if(typeof renderCategoryManager === 'function') renderCategoryManager();
+      // 保持当前子页面显示状态
+      setTimeout(function(){
+        try {
+          var sub = typeof currentSub !== 'undefined' ? currentSub.finance : null;
+          var fh = document.getElementById('financeHome');
+          var fs = document.getElementById('financeSub');
+          var cm = document.getElementById('categoryManager');
+          if(sub === 'categories' && cm){
+            if(fh) fh.style.display = 'none';
+            if(fs) fs.style.display = 'none';
+            cm.style.display = 'block';
+          } else if(sub && fh && fs){
+            fh.style.display = 'none';
+            fs.style.display = 'block';
+            if(cm) cm.style.display = 'none';
+          } else if(fh && fs){
+            fh.style.display = 'block';
+            fs.style.display = 'none';
+            if(cm) cm.style.display = 'none';
+          }
+        } catch(e){}
+      }, 10);
+    }
+    if(page === 'tools' && typeof renderToolsPage === 'function') renderToolsPage();
+    if(page === 'settings' && typeof renderSettings === 'function') renderSettings();
+  } catch(e){
+    console.warn('v9 renderAll error:', e);
+  }
 };
 
 // --- 记录中心板块导航 ---
