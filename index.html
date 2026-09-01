@@ -6,6 +6,37 @@
 <meta name="theme-color" content="#4F46E5">
 <meta name="description" content="旭哥记录 - 现代专业的个人工作台">
 <title>旭哥记录 · 个人工作台</title>
+<script>
+// 数据预修复：在v5 JS执行之前修复localStorage中的旧数据，防止.state.categories.filter()报错
+(function(){
+  try {
+    var LS_KEY = 'xiaole_v4_data';
+    var raw = localStorage.getItem(LS_KEY);
+    if(!raw) return;
+    var data = JSON.parse(raw);
+    var arrayFields = ['ideas','tasks','classes','students','attendance','teaching_records','life_records','subjects','study_records','projects','project_updates','plans','plan_tasks','pomodoro_sessions','books','accounts','categories','transactions','budgets','savings','saving_records','debts','debt_payments'];
+    var fixed = false;
+    for(var i=0; i<arrayFields.length; i++){
+      var f = arrayFields[i];
+      if(data[f] !== undefined && data[f] !== null && !Array.isArray(data[f])){
+        console.warn('预修复: data.' + f + ' 不是数组，已重置');
+        data[f] = [];
+        fixed = true;
+      }
+    }
+    if(typeof data.settings !== 'object' || data.settings === null){
+      data.settings = {};
+      fixed = true;
+    }
+    if(fixed){
+      localStorage.setItem(LS_KEY, JSON.stringify(data));
+      console.log('预修复完成，已保存正确的数据格式');
+    }
+  } catch(e){
+    console.warn('预修复出错:', e);
+  }
+})();
+</script>
 <style>
 /* ============================================================
    旭哥记录 v9.0 - 现代专业风设计系统
@@ -1985,6 +2016,124 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
   .icon-grid{grid-template-columns:repeat(8,1fr)}
 }
 
+/* ============================================================
+   统一图标尺寸 - 确保所有页面图标大小合适、精致
+   ============================================================ */
+
+/* 列表项图标 - 统一32x32容器，16x16图标 */
+.list-item .icon{
+  width:32px !important;
+  height:32px !important;
+  min-width:32px !important;
+  min-height:32px !important;
+}
+.list-item .icon svg{
+  width:16px !important;
+  height:16px !important;
+}
+
+/* 卡片标题图标 - 统一18x18 */
+.card-title svg,
+.card-header svg{
+  width:18px !important;
+  height:18px !important;
+}
+
+/* 统计卡图标 - 统一20x20 */
+.stat-card .icon,
+.stat-card svg{
+  max-width:20px !important;
+  max-height:20px !important;
+}
+
+/* 按钮图标 - 统一16x16 */
+.btn svg,
+.btn-sm svg,
+.icon-btn svg{
+  width:16px !important;
+  height:16px !important;
+}
+
+/* 板块卡片图标 - 保持40x40容器，20x20图标（略大但合适） */
+.section-card .sc-icon{
+  width:40px !important;
+  height:40px !important;
+}
+.section-card .sc-icon svg{
+  width:20px !important;
+  height:20px !important;
+}
+
+/* 空状态图标 - 限制最大尺寸 */
+.empty-state svg,
+.es-icon svg{
+  max-width:48px !important;
+  max-height:48px !important;
+}
+
+/* 通用SVG最大尺寸限制 - 防止任何图标过大 */
+svg{
+  max-width:100%;
+  max-height:100%;
+}
+
+/* 考勤页面特定调整 */
+.att-row .icon,
+.att-student .icon{
+  width:28px !important;
+  height:28px !important;
+}
+.att-row .icon svg,
+.att-student .icon svg{
+  width:14px !important;
+  height:14px !important;
+}
+
+/* 财务页面特定调整 */
+.account-card .icon,
+.budget-card .icon,
+.saving-card .icon,
+.debt-card .icon{
+  width:36px !important;
+  height:36px !important;
+}
+.account-card .icon svg,
+.budget-card .icon svg,
+.saving-card .icon svg,
+.debt-card .icon svg{
+  width:18px !important;
+  height:18px !important;
+}
+
+/* 分类管理图标 */
+.category-item .cat-icon{
+  width:32px !important;
+  height:32px !important;
+  min-width:32px !important;
+}
+.category-item .cat-icon svg{
+  width:16px !important;
+  height:16px !important;
+}
+
+/* 时间线图标 */
+.timeline-item .tl-icon,
+.timeline-dot{
+  width:24px !important;
+  height:24px !important;
+}
+.timeline-item .tl-icon svg{
+  width:12px !important;
+  height:12px !important;
+}
+
+/* 标签/芯片图标 */
+.tag svg,
+.chip svg{
+  width:12px !important;
+  height:12px !important;
+}
+
 </style>
 </head>
 <body>
@@ -3738,7 +3887,33 @@ function exportCSV(){const tx=state.transactions.filter(t=>!t.deleted);const hea
 function clearAllData(){showConfirm('确认清空所有数据？','此操作不可恢复，所有本地和云端数据都将被删除。').then(ok=>{if(!ok)return;Object.keys(state).forEach(k=>{if(Array.isArray(state[k]))state[k]=[];});state.settings={theme:'warm',background:'none',fontSize:'medium',reminders:true};saveLocal();syncAll();showToast('数据已清空');setTimeout(()=>location.reload(),800);});}
 
 function init(){
-  loadLocal();applyTheme();initSubTabs();renderAll();
+  loadLocal();
+
+// ========== v9数据修复（在loadLocal后立即执行） ==========
+try {
+  var _v9_arrayFields = ['ideas','tasks','classes','students','attendance','teaching_records','life_records','subjects','study_records','projects','project_updates','plans','plan_tasks','pomodoro_sessions','books','accounts','categories','transactions','budgets','savings','saving_records','debts','debt_payments'];
+  var _v9_needFix = false;
+  for(var _v9_i=0; _v9_i<_v9_arrayFields.length; _v9_i++){
+    var _v9_f = _v9_arrayFields[_v9_i];
+    if(state[_v9_f] === undefined || state[_v9_f] === null || !Array.isArray(state[_v9_f])){
+      console.log('v9数据修复: state.' + _v9_f + ' 类型=' + typeof state[_v9_f] + '，已重置为空数组');
+      state[_v9_f] = [];
+      _v9_needFix = true;
+    }
+  }
+  if(typeof state.settings !== 'object' || state.settings === null){
+    state.settings = {};
+    _v9_needFix = true;
+  }
+  if(_v9_needFix){
+    console.log('v9数据修复完成，数据已修复');
+    try { if(typeof saveLocal === 'function') saveLocal(); } catch(e){}
+  }
+} catch(_v9_e){
+  console.warn('v9数据修复出错:', _v9_e);
+}
+// ========== v9数据修复结束 ==========
+applyTheme();initSubTabs();renderAll();
   setTimeout(()=>syncAll().catch(()=>{}),500);
   setInterval(()=>syncAll().catch(()=>{}),60000);
   checkReminders();setInterval(checkReminders,30000);
@@ -3807,6 +3982,65 @@ setTimeout(function(){
 
 
 // ========== v9.0 现代专业风适配层 ==========
+
+// --- 数据修复：确保所有数组字段都是数组（防止旧版本数据导致.filter()报错）---
+(function fixStateData(){
+  try {
+    if(typeof state === 'undefined') return;
+    var arrayFields = ['ideas','tasks','classes','students','attendance','teaching_records','life_records','subjects','study_records','projects','project_updates','plans','plan_tasks','pomodoro_sessions','books','accounts','categories','transactions','budgets','savings','saving_records','debts','debt_payments'];
+    var fixed = false;
+    for(var i=0; i<arrayFields.length; i++){
+      var field = arrayFields[i];
+      if(state[field] === undefined || state[field] === null || !Array.isArray(state[field])){
+        console.warn('v9数据修复: state.' + field + ' 不是数组，已重置为空数组');
+        state[field] = [];
+        fixed = true;
+      }
+    }
+    // 确保settings是对象
+    if(typeof state.settings !== 'object' || state.settings === null){
+      state.settings = {};
+      fixed = true;
+    }
+    if(fixed){
+      console.log('v9数据修复完成，重新保存和渲染');
+      try { if(typeof saveLocal === 'function') saveLocal(); } catch(e){}
+      setTimeout(function(){
+        try { if(typeof renderAll === 'function') renderAll(); } catch(e){ console.warn('重新渲染失败', e); }
+      }, 100);
+    }
+  } catch(e){
+    console.warn('v9数据修复出错:', e);
+  }
+})();
+
+// --- 覆盖loadLocal：加载数据后自动修复数组字段 ---
+var originalLoadLocal = window.loadLocal;
+window.loadLocal = function(){
+  try {
+    if(typeof originalLoadLocal === 'function') originalLoadLocal();
+  } catch(e){
+    console.warn('原始loadLocal出错:', e);
+  }
+  // 加载后修复数据
+  try {
+    if(typeof state !== 'undefined'){
+      var arrayFields = ['ideas','tasks','classes','students','attendance','teaching_records','life_records','subjects','study_records','projects','project_updates','plans','plan_tasks','pomodoro_sessions','books','accounts','categories','transactions','budgets','savings','saving_records','debts','debt_payments'];
+      for(var i=0; i<arrayFields.length; i++){
+        var field = arrayFields[i];
+        if(state[field] === undefined || state[field] === null || !Array.isArray(state[field])){
+          console.warn('v9 loadLocal修复: state.' + field + ' 不是数组，已重置');
+          state[field] = [];
+        }
+      }
+      if(typeof state.settings !== 'object' || state.settings === null){
+        state.settings = {};
+      }
+    }
+  } catch(e){
+    console.warn('v9 loadLocal修复出错:', e);
+  }
+};
 
 // --- 全局错误保护：防止任何JS错误导致页面卡死 ---
 window.onerror = function(msg, url, line, col, error){
@@ -4162,28 +4396,61 @@ window.openCategoryManager = function(){
   window.scrollTo(0, 0);
 };
 
-// 分类数据初始化
+// 分类数据初始化（使用v5的数组格式，每个分类有type字段）
 window.initCategories = function(){
   if(typeof state === 'undefined') return;
-  if(!state.categories || !state.categories.expense || !state.categories.income || !Array.isArray(state.categories.expense)){
-    state.categories = {
-      expense: [
-        {id:'c1', name:'餐饮', icon:'i-coffee', color:'#F59E0B'},
-        {id:'c2', name:'交通', icon:'i-car', color:'#3B82F6'},
-        {id:'c3', name:'购物', icon:'i-briefcase', color:'#8B5CF6'},
-        {id:'c4', name:'娱乐', icon:'i-bolt', color:'#EC4899'},
-        {id:'c5', name:'居住', icon:'i-home', color:'#10B981'},
-        {id:'c6', name:'医疗', icon:'i-heart', color:'#EF4444'},
-        {id:'c7', name:'教育', icon:'i-graduation', color:'#06B6D4'},
-        {id:'c8', name:'其他', icon:'i-briefcase', color:'#64748B'}
-      ],
-      income: [
-        {id:'i1', name:'工资', icon:'i-wallet', color:'#10B981'},
-        {id:'i2', name:'奖金', icon:'i-bolt', color:'#F59E0B'},
-        {id:'i3', name:'投资', icon:'i-chart', color:'#3B82F6'},
-        {id:'i4', name:'其他', icon:'i-briefcase', color:'#64748B'}
-      ]
-    };
+  // 确保state.categories是数组
+  if(!state.categories || !Array.isArray(state.categories)){
+    state.categories = [];
+  }
+  // 如果没有默认分类，添加默认分类
+  var hasExpense = state.categories.some(function(c){ return c.type === 'expense'; });
+  var hasIncome = state.categories.some(function(c){ return c.type === 'income'; });
+  if(!hasExpense){
+    var defaults = [
+      {name:'餐饮', icon:'i-coffee', color:'#F59E0B'},
+      {name:'交通', icon:'i-car', color:'#3B82F6'},
+      {name:'购物', icon:'i-briefcase', color:'#8B5CF6'},
+      {name:'娱乐', icon:'i-bolt', color:'#EC4899'},
+      {name:'居住', icon:'i-home', color:'#10B981'},
+      {name:'医疗', icon:'i-heart', color:'#EF4444'},
+      {name:'教育', icon:'i-graduation', color:'#06B6D4'},
+      {name:'其他', icon:'i-briefcase', color:'#64748B'}
+    ];
+    defaults.forEach(function(d, i){
+      state.categories.push({
+        id: 'def_exp_' + i,
+        name: d.name,
+        icon: d.icon,
+        color: d.color,
+        type: 'expense',
+        is_default: true,
+        sort_order: i,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      });
+    });
+  }
+  if(!hasIncome){
+    var incDefaults = [
+      {name:'工资', icon:'i-wallet', color:'#10B981'},
+      {name:'奖金', icon:'i-bolt', color:'#F59E0B'},
+      {name:'投资', icon:'i-chart', color:'#3B82F6'},
+      {name:'其他', icon:'i-briefcase', color:'#64748B'}
+    ];
+    incDefaults.forEach(function(d, i){
+      state.categories.push({
+        id: 'def_inc_' + i,
+        name: d.name,
+        icon: d.icon,
+        color: d.color,
+        type: 'income',
+        is_default: true,
+        sort_order: i,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      });
+    });
   }
 };
 
@@ -4191,7 +4458,10 @@ window.initCategories = function(){
 window.renderCategoryManager = function(){
   if(typeof state === 'undefined') return;
   initCategories();
-  if(!state.categories || !state.categories.expense || !state.categories.income) return;
+  if(!state.categories || !Array.isArray(state.categories)) return;
+
+  var expenseCats = state.categories.filter(function(c){ return c.type === 'expense' && !c.deleted; });
+  var incomeCats = state.categories.filter(function(c){ return c.type === 'income' && !c.deleted; });
 
   var renderList = function(cats, type){
     if(!cats || cats.length === 0){
@@ -4210,12 +4480,12 @@ window.renderCategoryManager = function(){
 
   var expList = document.getElementById('expenseCategoryList');
   var incList = document.getElementById('incomeCategoryList');
-  if(expList) expList.innerHTML = renderList(state.categories.expense, 'expense');
-  if(incList) incList.innerHTML = renderList(state.categories.income, 'income');
+  if(expList) expList.innerHTML = renderList(expenseCats, 'expense');
+  if(incList) incList.innerHTML = renderList(incomeCats, 'income');
 
   // 更新分类数量
   var fc = document.getElementById('fcCategories');
-  if(fc) fc.textContent = (state.categories.expense.length + state.categories.income.length) + ' 分类';
+  if(fc) fc.textContent = (expenseCats.length + incomeCats.length) + ' 分类';
 };
 
 // 分类编辑/添加
@@ -4225,7 +4495,7 @@ window.openCategoryEdit = function(id, type){
 
   var cat = null;
   if(id){
-    cat = state.categories[type].find(function(c){ return c.id === id; });
+    cat = state.categories.find(function(c){ return c.id === id; });
   }
 
   var icons = ['i-coffee','i-car','i-briefcase','i-bolt','i-home','i-heart','i-graduation','i-wallet','i-chart','i-calendar','i-clock','i-book','i-rocket','i-exchange','i-download','i-camera','i-credit-card'];
@@ -4281,7 +4551,7 @@ window.selectCatColor = function(color){
 window.saveCategory = function(id, type){
   if(typeof state === 'undefined') return;
   initCategories();
-  if(!state.categories || !state.categories[type]) return;
+  if(!state.categories || !Array.isArray(state.categories)) return;
 
   var nameInput = document.getElementById('catNameInput');
   var name = nameInput ? nameInput.value.trim() : '';
@@ -4293,18 +4563,25 @@ window.saveCategory = function(id, type){
   var color = window._catEditState ? window._catEditState.color : '#64748B';
 
   if(id){
-    var cat = state.categories[type].find(function(c){ return c.id === id; });
+    var cat = state.categories.find(function(c){ return c.id === id; });
     if(cat){
       cat.name = name;
       cat.icon = icon;
       cat.color = color;
+      cat.updated_at = new Date().toISOString();
     }
   } else {
-    state.categories[type].push({
-      id: 'c' + Date.now(),
+    state.categories.push({
+      id: 'cat_' + Date.now(),
       name: name,
       icon: icon,
-      color: color
+      color: color,
+      type: type,
+      is_default: false,
+      sort_order: state.categories.length,
+      device_id: typeof deviceId !== 'undefined' ? deviceId : '',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     });
   }
 
@@ -4317,10 +4594,14 @@ window.saveCategory = function(id, type){
 window.deleteCategory = function(id, type){
   if(typeof state === 'undefined') return;
   initCategories();
-  if(!state.categories || !state.categories[type]) return;
+  if(!state.categories || !Array.isArray(state.categories)) return;
 
   showConfirm('删除分类', '确定要删除这个分类吗？', function(){
-    state.categories[type] = state.categories[type].filter(function(c){ return c.id !== id; });
+    var cat = state.categories.find(function(c){ return c.id === id; });
+    if(cat){
+      cat.deleted = true;
+      cat.updated_at = new Date().toISOString();
+    }
     if(typeof saveLocal === 'function') saveLocal();
     renderCategoryManager();
     showToast('分类已删除');
@@ -4400,8 +4681,9 @@ function v9_renderDashboard(){
   if(el) el.textContent = (state.accounts || []).filter(function(a){return !a.deleted;}).length + ' 账户';
   if(typeof initCategories === 'function') initCategories();
   el = document.getElementById('fcCategories');
-  if(el && state.categories){
-    el.textContent = (state.categories.expense.length + state.categories.income.length) + ' 分类';
+  if(el && state.categories && Array.isArray(state.categories)){
+    var validCats = state.categories.filter(function(c){ return !c.deleted; });
+    el.textContent = validCats.length + ' 分类';
   }
 
   // 最近记录
